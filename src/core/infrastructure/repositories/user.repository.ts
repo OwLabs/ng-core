@@ -25,12 +25,16 @@ export class UserRepository {
   }
 
   async findByEmail(email: string): Promise<UserEntity | null> {
-    const result = await this.userModel.findOne({ email }).exec();
+    const result = await this.userModel
+      .findOne({ email: { $eq: email } })
+      .exec();
     return result ? new UserEntity(result.toObject<IUser>()) : null;
   }
 
   async findByProviderId(providerId: string): Promise<UserEntity | null> {
-    const result = await this.userModel.findOne({ providerId }).exec();
+    const result = await this.userModel
+      .findOne({ providerId: { $eq: providerId } })
+      .exec();
     return result ? new UserEntity(result.toObject<IUser>()) : null;
   }
 
