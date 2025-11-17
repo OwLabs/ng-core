@@ -23,6 +23,33 @@ This project follows the [Conventional Commits](https://www.conventionalcommits.
 
 - ***
 
+---
+
+## [1.0.2] — CI Test Workflow (Unit + E2E)
+
+### Added
+
+- Added GitHub Actions workflow for automated testing.
+- Configured separate execution for:
+  - **Unit tests** (`npm run unit`)
+  - **E2E tests** (`npm run e2e`)
+- Test workflow triggers on:
+  - pushes to `main`
+  - pull requests to `main`
+- Ensured Node.js version consistency using `setup-node@v4`.
+
+### Fixed
+
+- Resolved PR update issue by ensuring workflow file exists and can be committed.
+
+### Notes
+
+- This workflow currently uses **MongoDB Memory Server** for E2E tests.
+- A real MongoDB service via Docker can be added later once the project reaches the containerization stage.
+- Every pull request must now pass **unit + e2e** tests before merging.
+
+---
+
 ## [1.0.1] — Authentication, Users, RBAC & API Documentation
 
 ### Added
