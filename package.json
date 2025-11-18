@@ -9,7 +9,7 @@
     "src": "dist/src"
   },
   "scripts": {
-    "build": "rimraf dist && tsc",
+    "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nodemon --watch src --exec \"nest start --watch\"",
