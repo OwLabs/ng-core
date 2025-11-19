@@ -1,6 +1,6 @@
 {
   "name": "ng-core",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "source for NeuralGuru's core",
   "author": "NeuralGuru",
   "private": true,
@@ -50,6 +50,7 @@
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
+    "@compodoc/compodoc": "^1.1.32",
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.18.0",
     "@nestjs/cli": "^11.0.0",

@@ -25,6 +25,21 @@ This project follows the [Conventional Commits](https://www.conventionalcommits.
 
 ---
 
+## [1.0.3] — Compodoc Documentation Setup
+
+### Added
+
+- Integrated Compodoc for auto-generated documentation.
+- Initial documentation for all modules, providers, and controllers.
+
+### Notes
+
+- Compodoc is traditionally for **Angular** but works seamlessly with **NestJS** due to their similar structure.
+- Useful for API docs, class diagrams, dependency graphs.
+- Future step: integrate Compodoc into **CI/CD** (optional).
+
+---
+
 ## [1.0.2] — CI Test Workflow (Unit + E2E)
 
 ### Added
