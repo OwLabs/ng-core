@@ -8,6 +8,13 @@
 # Source repository: https://github.com/actions/dependency-review-action
 # Public documentation: https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/about-dependency-review#dependency-review-enforcement
 name: 'Dependency review'
+on:
+  push: 
+    branches: 
+      - main
+      - fix/pipeline-issue
+  pull_request:
+    branches: ['main']
 
 # If using a dependency submission action in this workflow this permission will need to be set to:
 #
@@ -32,6 +39,9 @@ jobs:
         # Commonly enabled options, see https://github.com/actions/dependency-review-action#configuration-options for all available options.
         with:
           comment-summary-in-pr: always
+          base-ref: main
+          head-ref: ${{ github.ref_name }}
+
         #   fail-on-severity: moderate
         #   deny-licenses: GPL-1.0-or-later, LGPL-2.0-or-later
         #   retry-on-snapshot-warnings: true
