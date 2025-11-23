@@ -29,8 +29,7 @@ permissions:
 
 jobs:
   dependency-review:
-    if: >
-    github.event_name == 'pull_request' || github.event_name == 'push'
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout repository'
