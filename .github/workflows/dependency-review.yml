@@ -10,8 +10,7 @@
 name: 'Dependency review'
 on:
   push: 
-    branches: 
-      - main
+    branches: ['main']
   pull_request:
     branches: ['main']
 
@@ -40,7 +39,6 @@ jobs:
           comment-summary-in-pr: always
           base-ref: main
           head-ref: ${{ github.ref_name }}
-
         #   fail-on-severity: moderate
         #   deny-licenses: GPL-1.0-or-later, LGPL-2.0-or-later
         #   retry-on-snapshot-warnings: true
