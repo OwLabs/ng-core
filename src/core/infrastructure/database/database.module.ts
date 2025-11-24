@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DatabaseService } from './database.service';
-import { User, UserSchema } from './schemas';
+import { RefreshToken, RefreshTokenSchema, User, UserSchema } from './schemas';
 
 @Module({
   imports: [
@@ -11,7 +11,10 @@ import { User, UserSchema } from './schemas';
         dbName: process.env.MONGO_DB_NAME,
       }),
     }),
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
+      { name: RefreshToken.name, schema: RefreshTokenSchema },
+    ]),
   ],
   providers: [DatabaseService],
   exports: [DatabaseService, MongooseModule],

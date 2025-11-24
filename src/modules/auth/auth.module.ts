@@ -6,8 +6,13 @@ import { DatabaseModule } from 'src/core/infrastructure/database';
 import { AuthController, GoogleAuthController } from './controllers';
 import { AuthService } from './services';
 import { GoogleStrategy, JwtStrategy, LocalStrategy } from './strategies';
-import { UserRepository } from 'src/core/infrastructure/repositories';
+import {
+  RefreshTokenRepository,
+  UserRepository,
+} from 'src/core/infrastructure/repositories';
 import { ConfigService } from '@nestjs/config';
+import { RefreshTokenService } from './services/refresh-token.service';
+import { UsersService } from '../users/services';
 
 @Module({
   imports: [
@@ -27,11 +32,14 @@ import { ConfigService } from '@nestjs/config';
   controllers: [AuthController, GoogleAuthController],
   providers: [
     AuthService,
+    UsersService,
+    RefreshTokenService,
     LocalStrategy,
     JwtStrategy,
     UserRepository,
+    RefreshTokenRepository,
     GoogleStrategy,
   ],
-  exports: [AuthService],
+  exports: [AuthService, RefreshTokenService],
 })
 export class AuthModule {}

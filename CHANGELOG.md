@@ -25,6 +25,61 @@ This project follows the [Conventional Commits](https://www.conventionalcommits.
 
 ---
 
+## [1.0.4] — Refresh Token Module (Rotation, Revocation, E2E + Unit Tests)
+
+### Added
+
+- Implemented full **Refresh Token Module** with secure token rotation.
+- Added new authentication flows:
+  - `POST /auth/refresh` — rotate refresh token, return new access & refresh tokens.
+  - `POST /auth/logout` — revoke only current device's refresh token.
+  - `POST /auth/logout-all-devices` — revoke _all_ tokens for current user (JWT-protected).
+- Added `RefreshTokenService` with:
+  - `createToken()` — creates DB record + hashed token
+  - `validateRefreshToken()` — validates hash, expiry, and revocation status
+  - `rotateRefreshToken()` — rotates token, revokes old, generates new pair
+  - `revokeTokenById()` — invalidate a single session
+  - `revokeAllForUser()` — invalidate all sessions
+- Added `RefreshTokenRepository` and Mongo schema.
+- Added refresh token hashing using **bcrypt**.
+- Added support for storing login context:
+  - IP address
+  - User-Agent
+  - Token TTL (default 30 days)
+
+### Changed
+
+- Updated `AuthController`:
+  - Added `refresh`, `logout`, and `logout-all-devices` routes.
+  - Login now extracts IP and user agent automatically via `req.headers`.
+  - Updated login response to include `{ access_token, newRawToken }`.
+
+- Updated E2E auth setup to support new routes.
+
+### Fixed
+
+- Fixed scenario where expired or revoked refresh tokens were not validated correctly.
+- Fixed login flow to properly record device metadata.
+
+### Added (Testing)
+
+- Added **unit tests** for `RefreshTokenService`:
+  - token creation
+  - validation (revoked, expired, hash mismatch)
+  - rotation logic
+  - revocation logic
+- Added spies for repository methods and bcrypt comparisons.
+- Ensured unit tests use isolated DI container with mocked repositories.
+- Updated **E2E tests** to align with the new auth flow.
+
+### Notes
+
+- Token rotation now follows industry standards (similar to Google, Amazon, Auth0).
+- Backend now supports full **multi-device session management**.
+- Next step (optional): integrating refresh tokens into Google OAuth login.
+
+---
+
 ## [1.0.3] — Compodoc Documentation Setup
 
 ### Added

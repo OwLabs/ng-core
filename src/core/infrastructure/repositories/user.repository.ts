@@ -39,7 +39,7 @@ export class UserRepository {
   }
 
   async findById(id: string): Promise<UserEntity | null> {
-    const result = await this.userModel.findById(id).exec();
+    const result = await this.userModel.findById(id).select('-password').exec();
     return result ? new UserEntity(result.toObject<IUser>()) : null;
   }
 

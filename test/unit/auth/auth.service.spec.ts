@@ -6,15 +6,21 @@ import { AuthService } from 'src/modules/auth/services';
 import * as bcrypt from 'bcryptjs';
 import { Types } from 'mongoose';
 import { IUser } from 'src/core/domain/interfaces';
+import { RefreshTokenService } from 'src/modules/auth/services/refresh-token.service';
 
 describe('AuthService (Unit)', () => {
   let authService: AuthService;
   let jwtService: jest.Mocked<JwtService>;
   let userRepo: jest.Mocked<UserRepository>;
+  let refreshTokenService: jest.Mocked<RefreshTokenService>;
 
   beforeEach(() => {
     jwtService = {
       sign: jest.fn().mockReturnValue('fake-jwt-token'),
+    } as any;
+
+    refreshTokenService = {
+      createToken: jest.fn().mockResolvedValue({ plain: 'fake-refresh-token' }),
     } as any;
 
     userRepo = {
@@ -22,7 +28,7 @@ describe('AuthService (Unit)', () => {
       create: jest.fn(),
     } as any;
 
-    authService = new AuthService(jwtService, userRepo);
+    authService = new AuthService(jwtService, userRepo, refreshTokenService);
   });
 
   it('should register new user', async () => {
@@ -177,6 +183,7 @@ describe('AuthService (Unit)', () => {
   describe('login', () => {
     it('should sign JWT correctly', async () => {
       const userId = new Types.ObjectId('6710f3d40c7b2f4e8d4d9b22');
+      let ctx = {};
 
       const user: IUser = {
         _id: userId,
@@ -185,7 +192,7 @@ describe('AuthService (Unit)', () => {
         roles: ['student'],
       };
 
-      const result = await authService.login(user);
+      const result = await authService.login(user, ctx);
 
       expect(jwtService.sign).toHaveBeenCalledTimes(1);
       expect(jwtService.sign).toHaveBeenCalledWith(
@@ -198,7 +205,10 @@ describe('AuthService (Unit)', () => {
       const payload: any = jwtService.sign.mock.calls[0][0];
 
       expect(payload.sub.toString()).toBe('6710f3d40c7b2f4e8d4d9b22');
-      expect(result).toEqual({ access_token: 'fake-jwt-token' });
+      expect(result).toEqual({
+        access_token: 'fake-jwt-token',
+        newRawToken: 'fake-refresh-token',
+      });
     });
   });
 
