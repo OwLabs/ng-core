@@ -16,8 +16,4 @@ export class UserEntity implements IUser {
   constructor(partial: Partial<IUser>) {
     Object.assign(this, partial);
   }
-
-  hasRoles(role: string): boolean {
-    return this.roles?.includes(role) ?? false;
-  }
 }

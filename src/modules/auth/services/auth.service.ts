@@ -6,12 +6,14 @@ import { IUser } from 'src/core/domain/interfaces';
 import * as bcrypt from 'bcryptjs';
 import { AuthResult } from '../types';
 import { sanitizeUser } from 'src/common/utils';
+import { RefreshTokenService } from './refresh-token.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly userRepo: UserRepository,
+    private readonly refreshTokenService: RefreshTokenService,
   ) {}
 
   async register(dto: RegisterDto): Promise<IUser> {
@@ -52,10 +54,22 @@ export class AuthService {
     return { success: true, user: sanitizeUser(user) };
   }
 
-  async login(user: IUser) {
+  async login(
+    user: IUser,
+    ctx: { userAgent?: string; ip?: string; tokenTtlDays?: number },
+  ): Promise<{ access_token: string; newRawToken: string }> {
     const payload = { email: user.email, sub: user._id, roles: user.roles };
     const access_token = this.jwtService.sign(payload);
-    return { access_token };
+
+    const { plain: newRawToken } = await this.refreshTokenService.createToken(
+      user._id!.toString(),
+      {
+        userAgent: ctx.userAgent,
+        ip: ctx.ip,
+        tokenTtlDays: ctx.tokenTtlDays,
+      },
+    );
+    return { access_token, newRawToken };
   }
 
   async validateGoogleUser(profile: {
@@ -73,7 +87,7 @@ export class AuthService {
         provider: 'google',
         providerId: profile.providerId,
         avatar: profile.picture,
-        roles: ['student'],
+        roles: ['user'],
       });
     }
 

@@ -22,7 +22,7 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    return updatedUser;
+    return sanitizeUser(updatedUser);
   }
 
   async findByEmail(email: string): Promise<UserEntity | null> {
@@ -40,6 +40,6 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    return sanitizeUser(user) as UserEntity;
+    return sanitizeUser(user);
   }
 }

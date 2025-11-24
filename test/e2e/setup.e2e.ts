@@ -5,7 +5,6 @@ import * as request from 'supertest';
 import mongoose from 'mongoose';
 import { AppModule } from '../../src/app.module';
 import { ApiVersionEnum } from 'src/api';
-import { UsersModule } from 'src/modules/users/users.module';
 
 let app: INestApplication;
 let mongod: MongoMemoryServer;
@@ -19,7 +18,7 @@ export const setupE2EApp = async () => {
   process.env.JWT_EXPIRES_IN = '5000';
 
   const moduleFixture: TestingModule = await Test.createTestingModule({
-    imports: [AppModule, UsersModule],
+    imports: [AppModule],
   }).compile();
 
   app = moduleFixture.createNestApplication();
