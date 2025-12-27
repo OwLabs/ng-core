@@ -80,6 +80,9 @@ export class RefreshTokenService {
     }
 
     if (record.revoked) {
+      // Possible token theft
+      await this.refreshTokenRepo.revokeAllForUser(record.userId.toString());
+
       throw new UnauthorizedException('Token has been revoked');
     }
 

@@ -25,6 +25,47 @@ This project follows the [Conventional Commits](https://www.conventionalcommits.
 
 ---
 
+## [1.0.5] — Google OAuth Authentication + Token Integration
+
+### Added
+
+- Implemented **Google OAuth 2.0 authentication flow** using Passport:
+  - `GET /auth/google` — initiates Google OAuth login
+  - `GET /auth/google/redirect` — handles Google callback and login completion
+- Added `GoogleStrategy` with profile validation and user provisioning.
+- Integrated Google login with existing **JWT + Refresh Token System**.
+- Automatically creates a new user on first Google login.
+- Issued both:
+  - JWT access token
+  - Rotating refresh token on successful Google authentication
+- Captured login context during Google login:
+  - User-Agent
+  - IP address
+
+### Changed
+
+- Extended `AuthService.login()` to support OAuth-based users.
+- Reused existing refresh token rotation logic for Google-authenticated users.
+- Unified login token issuance logic across local and Google providers.
+
+### Fixed
+
+- Ensured Google-authenticated users never expose password fields.
+- Prevented refresh token creation without proper user context.
+- Corrected Google strategy validation signature to align with Passport flow.
+
+### Added (Testing)
+
+### Notes
+
+- Skip **E2E and unit tests** for Google Oauth callback flow.
+- Will spillover to the next sprint for this particular test.
+- Google OAuth is fully integrated with multi-device session support.
+- Refresh token security rules (rotation, revocation, expiry) apply identically to local and Google logins.
+- OAuth provider logic is isolated and reusable for future providers (e.g. Github, Facebook and etc)
+
+---
+
 ## [1.0.4] — Refresh Token Module (Rotation, Revocation, E2E + Unit Tests)
 
 ### Added

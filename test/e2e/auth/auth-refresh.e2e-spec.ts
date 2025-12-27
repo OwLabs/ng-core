@@ -1,6 +1,6 @@
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import { AuthService, RefreshTokenService } from 'src/modules/auth/services';
-import { apiEndpoint, setupE2EApp } from '../setup.e2e';
+import { apiEndpoint, closeE2EApp, setupE2EApp } from '../setup.e2e';
 import { IUser } from 'src/core/domain/interfaces';
 import * as request from 'supertest';
 import { ApiVersionEnum } from 'src/api';
@@ -67,6 +67,10 @@ describe('Auth Refresh Tokens', () => {
     spyRotateRefreshToken.mockRestore();
     spyRevokeTokenById.mockRestore();
     spyRevokeAllForUser.mockRestore();
+  });
+
+  afterAll(async () => {
+    await closeE2EApp();
   });
 
   it('should execute full refresh token flow', async () => {

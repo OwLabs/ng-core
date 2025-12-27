@@ -1,28 +1,32 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy, VerifyCallback } from 'passport-google-oauth20';
+import {
+  Strategy,
+  StrategyOptions,
+  VerifyCallback,
+} from 'passport-google-oauth20';
 import { AuthService } from '../services';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
-  constructor(private readonly authService: AuthService) {
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {
     super({
-      clientID: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      callbackURL: process.env.CALLBACK_URL,
+      clientID: configService.get<string>('GOOGLE_CLIENT_ID'),
+      clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET'),
+      callbackURL: configService.get<string>('GOOGLE_CALLBACK_URL'),
       scope: ['email', 'profile'],
-    });
+      passReqToCallback: false, // set to true if u want to access the req.user from Google entity
+    } as StrategyOptions);
   }
 
-  async validate(
-    accessToken: string,
-    refreshToken: string,
-    profile: any,
-    done: VerifyCallback,
-  ): Promise<any> {
+  async validate(profile: any, done: VerifyCallback): Promise<any> {
     const { emails, displayName, photos, id } = profile;
 
-    const user = this.authService.validateGoogleUser({
+    const user = await this.authService.validateGoogleUser({
       providerId: id,
       email: emails?.[0]?.value,
       name: displayName,

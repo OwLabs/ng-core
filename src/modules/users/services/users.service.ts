@@ -12,6 +12,10 @@ export class UsersService {
     return this.userRepository.findById(id);
   }
 
+  async findByEmail(email: string): Promise<UserEntity | null> {
+    return this.userRepository.findByEmail(email);
+  }
+
   async updateRoles(
     userId: string,
     roles: RoleEnum[],
@@ -23,10 +27,6 @@ export class UsersService {
     }
 
     return sanitizeUser(updatedUser);
-  }
-
-  async findByEmail(email: string): Promise<UserEntity | null> {
-    return this.userRepository.findByEmail(email);
   }
 
   async findAll(): Promise<UserEntity[]> {
@@ -41,5 +41,21 @@ export class UsersService {
     }
 
     return sanitizeUser(user);
+  }
+
+  async createGoogleUser(userData: {
+    email: string;
+    name: string;
+    provider: 'google';
+    providerId: string;
+    avatar?: string;
+  }): Promise<UserEntity> {
+    const user = await this.userRepository.create({
+      ...userData,
+      password: null,
+      avatar: userData.avatar ?? null,
+    });
+
+    return user;
   }
 }

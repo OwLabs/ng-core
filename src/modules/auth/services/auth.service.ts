@@ -77,7 +77,7 @@ export class AuthService {
     email: string;
     name: string;
     picture?: string;
-  }) {
+  }): Promise<Omit<IUser, 'password'>> {
     let user = await this.userRepo.findByEmail(profile.email);
 
     if (!user) {
@@ -91,8 +91,6 @@ export class AuthService {
       });
     }
 
-    const payload = { email: user?.email, sub: user?._id, roles: user?.roles };
-    const access_token = this.jwtService.sign(payload);
-    return { access_token, user: sanitizeUser(user) };
+    return sanitizeUser(user);
   }
 }
