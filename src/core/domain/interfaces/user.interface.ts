@@ -7,7 +7,7 @@ export interface IUser {
   name: string;
   provider?: 'local' | 'google';
   providerId?: string;
-  avatar?: string;
+  avatar?: string | null;
   roles?: string[];
   createdAt?: Date;
   updatedAt?: Date;

@@ -241,20 +241,17 @@ describe('AuthService (Unit)', () => {
 
       expect(userRepo.create).toHaveBeenCalledTimes(1);
 
-      expect(result.user._id).toBeInstanceOf(Types.ObjectId);
-      expect(result.user._id?.toString()).toBe('6710f3d40c7b2f4e8d4d9b22');
+      expect(result._id).toBeInstanceOf(Types.ObjectId);
+      expect(result._id?.toString()).toBe('6710f3d40c7b2f4e8d4d9b22');
       expect(result).toMatchObject({
-        access_token: 'fake-jwt-token',
-        user: {
-          email: 'google@gmail.com',
-          name: 'google-user',
-          provider: 'google',
-          providerId: 'google-123',
-          avatar: 'avatar.png',
-          roles: ['student'],
-          createdAt: expect.any(Date),
-          updatedAt: expect.any(Date),
-        },
+        email: 'google@gmail.com',
+        name: 'google-user',
+        provider: 'google',
+        providerId: 'google-123',
+        avatar: 'avatar.png',
+        roles: ['student'],
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
       });
     });
   });

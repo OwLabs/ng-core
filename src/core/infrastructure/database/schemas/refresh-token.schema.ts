@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { IsOptional } from 'class-validator';
 import { Document, Types } from 'mongoose';
 
 @Schema({ timestamps: true })
@@ -10,12 +11,15 @@ export class RefreshToken extends Document {
   tokenHash: string;
 
   @Prop()
+  @IsOptional()
   userAgent?: string;
 
   @Prop()
+  @IsOptional()
   ip?: string;
 
   @Prop({ default: false })
+  @IsOptional()
   revoked?: boolean;
 
   @Prop({ required: true })
