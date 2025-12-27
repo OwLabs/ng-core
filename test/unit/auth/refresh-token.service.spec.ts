@@ -81,7 +81,7 @@ describe('RefreshTokenService (Unit', () => {
 
   describe('validateRefreshToken', () => {
     it('should validate a valid refresh token', async () => {
-      const rawToken = 'abc123.random';
+      const rawToken = 'abc123.random.signature';
       const savedHashToken = await bcrypt.hash(rawToken, 10);
 
       refreshTokenRepo.findById.mockResolvedValue({
@@ -97,14 +97,23 @@ describe('RefreshTokenService (Unit', () => {
       expect(result._id).toBe('abc123');
     });
 
-    it('should throw if token is revoked', async () => {
+    it('should revoke all user tokens and throw if token is revoked', async () => {
+      const userId = new Types.ObjectId().toString();
+
       refreshTokenRepo.findById.mockResolvedValue({
+        _id: 'refreshTokenDocId123',
         revoked: true,
+        userId,
       } as any);
 
       await expect(
         refreshTokenService.validateRefreshToken('trueRevokedToken.random'),
       ).rejects.toThrow(new UnauthorizedException('Token has been revoked'));
+
+      expect(refreshTokenRepo.findById).toHaveBeenCalledWith(
+        'trueRevokedToken',
+      );
+      expect(refreshTokenRepo.revokeAllForUser).toHaveBeenCalledWith(userId);
     });
 
     it('should throw if token is expired', async () => {
