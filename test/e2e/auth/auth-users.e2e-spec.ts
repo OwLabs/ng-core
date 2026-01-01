@@ -8,7 +8,7 @@ import { ENDPOINT_SUBTOPICS, ENDPOINT_TOPICS } from '../constants';
 import { RoleEnum } from 'src/common/decorators';
 import { IUser } from 'src/core/domain/interfaces';
 
-describe('Auth + Users E2E', () => {
+describe('Auth + User Role', () => {
   let app: INestApplication;
   let authService: AuthService;
   let usersService: UsersService;

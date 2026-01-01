@@ -21,7 +21,137 @@ This project follows the [Conventional Commits](https://www.conventionalcommits.
 
 ### Removed
 
+-
+
+### Added (Testing)
+
+### Notes
+
+-
+
 - ***
+
+---
+
+## [1.0.6] — Material Module (Upload, RBAC, Multipart Safety, Tests)
+
+### Added
+
+- Implemented **Materials Module** with clean Controller → Service → Repository layering.
+- Added **material upload flow** with multipart/form-data support:
+  - `POST /v1/material/upload`
+- Stored uploaded material metadata:
+  - title
+  - description
+  - type (`document` | `video`)
+  - subject
+  - fileUrl (local storage path)
+  - fileSize
+  - mimeType
+  - originalName
+  - uploadedBy (User reference)
+  - optional courseId
+- Added other endpoint as well in **material controller**:
+  - `GET /v1/material/:id`
+  - `GET /v1/material/download/:id`
+  - `GET /v1/material`
+- Integrated **local file upload handling** using `@nestjs/platform-express` (`FileInterceptor`).
+- Added `Material` MongoDB schema with timestamps.
+- Added `MaterialEntity` and `IMaterial` domain interface.
+- Implemented `MaterialRepository` with:
+  - `create()` — persist material
+  - `findAll()` — retrieve all materials
+  - `findById()` — retrieve material by it's ID
+- Implemented `MaterialService` with:
+  - `uploadMaterial()`
+  - `getAllMaterials()`
+  - `getMaterialById()`
+  - `downloadMaterial()`
+
+#### Access Control (RBAC)
+
+- Protected all material routes using:
+  - `JwtAuthGuard`
+  - `RolesGuard`
+- Applied **role-based access rules**:
+  - Tutors & Admins → upload materials
+  - Students, Tutors & Admins → view materials
+- Centralized guards at controller level to avoid repetition.
+
+#### Multipart Request Safety (RBAC + File Upload)
+
+- Enhanced `RolesGuard` to **safely handle multipart/form-data requests**:
+  - Drains the request stream (`request.resume()`) before throwing `ForbiddenException`
+  - Prevents unhandled stream errors when access is denied during file uploads
+  - Prevents NestJS from crashing due to stream-related errors (e.g. `ECONNRESET`, `ERR_STREAM_PREMATURE_CLOSE`)
+- Ensures NestJS does **not crash or hang** when:
+  - User uploads a file
+  - User lacks required role
+- Guard now gracefully handles:
+  - readable streams
+  - early RBAC rejection
+  - stream completion (`end` / `error`)
+
+#### API & Validation
+
+- Added `UploadMaterialDto` with validation rules using `class-validator`.
+- Integrated material routes into versioned API (`/v1/material`).
+- Materials endpoints included in Swagger documentation.
+
+### Changed
+
+- Adopted **ObjectId consistency**:
+  - `uploadedBy` is stored as `Types.ObjectId` at persistence layer.
+  - Service layer accepts string userId and converts internally.
+- Standardized controller return types to use `MaterialEntity`.
+- Updated `RolesGuard` to use the new `UserExpressRequest` interface:
+  - Strongly typed `request.user`
+  - Explicit support for stream-related properties (`readable`, `readableEnded`, `resume`)
+  - Improved type safety for multipart/form-data handling
+
+### Fixed
+
+- Fixed NestJS crash scenario when:
+  - multipart upload is rejected by RBAC
+  - request stream is not consumed
+- Ensured forbidden uploads:
+  - do not reach service layer
+  - do not leave hanging streams
+- Resolved TypeScript mismatches between:
+  - DTOs
+  - domain interfaces
+  - entity constructors
+
+### Added (Testing)
+
+- Added **unit tests** for `MaterialService`:
+  - upload material
+  - retrieve materials
+- Added **unit tests** for `RolesGuard`:
+  - denies access when role does not match
+  - drains multipart streams before throwing `ForbiddenException`
+- Added **E2E tests** for Materials module:
+  - Tutor can upload material
+  - Student is forbidden from uploading
+  - Forbidden upload returns proper 403 response
+  - Service method is not invoked on RBAC failure
+- Added reusable **test helpers**:
+  - `seedUser()` for controlled role-based E2E setup
+- Verified RBAC behavior using real JWT tokens and multipart requests.
+
+### Notes
+
+- File storage currently uses **local filesystem** (`/uploads/*`).
+- Developers must create an **`uploads/`** folder at the project root to ensure file uploads work correctly during development and testing.
+- Guard-level stream draining is critical when combining:
+  - Multer
+  - file uploads
+  - role-based authorization
+- Future improvements (planned):
+  - AWS S3 integration
+  - File streaming / secure download endpoint
+  - Pagination & filtering for material listing
+  - Material ownership & course-based access control
 
 ---
 

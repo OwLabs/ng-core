@@ -1,7 +1,14 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DatabaseService } from './database.service';
-import { RefreshToken, RefreshTokenSchema, User, UserSchema } from './schemas';
+import {
+  Material,
+  MaterialSchema,
+  RefreshToken,
+  RefreshTokenSchema,
+  User,
+  UserSchema,
+} from './schemas';
 
 @Module({
   imports: [
@@ -14,6 +21,7 @@ import { RefreshToken, RefreshTokenSchema, User, UserSchema } from './schemas';
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: RefreshToken.name, schema: RefreshTokenSchema },
+      { name: Material.name, schema: MaterialSchema },
     ]),
   ],
   providers: [DatabaseService],

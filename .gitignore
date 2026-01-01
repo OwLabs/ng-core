@@ -61,3 +61,6 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 # Compodoc generated docs
 documentation/
 docs/
+
+# For material MVP local development only
+uploads/
