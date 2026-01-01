@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import * as bcrypt from 'bcryptjs';
 import { cryptoRandom } from 'src/common/utils';
 import { JwtService } from '@nestjs/jwt';
-import { RefreshTokenEntity } from 'src/core/domain/entities/refresh-token.entity';
+import { RefreshTokenEntity } from 'src/core/domain/entities';
 import { RefreshTokenPayload } from 'src/core/domain/interfaces';
 import { UsersService } from 'src/modules/users/services';
 

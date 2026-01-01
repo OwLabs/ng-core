@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { RefreshToken } from '../database/schemas';
 import { Model, Types } from 'mongoose';
-import { RefreshTokenEntity } from 'src/core/domain/entities/refresh-token.entity';
+import { RefreshTokenEntity } from 'src/core/domain/entities';
 import { IRefreshToken } from 'src/core/domain/interfaces';
 
 @Injectable()
