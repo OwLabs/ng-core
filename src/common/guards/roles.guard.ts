@@ -36,9 +36,17 @@ export class RolesGuard implements CanActivate {
 
         // Wait for the stream to finish draining
         await new Promise<void>((resolve) => {
-          request.on('end', () => resolve());
-          request.on('error', () => resolve());
-          setTimeout(() => resolve(), 1000); // 1 seconds
+          const timeout = setTimeout(resolve, 1000); // 1 seconds
+
+          request.on('end', () => {
+            clearTimeout(timeout);
+            resolve();
+          });
+
+          request.on('error', () => {
+            clearTimeout(timeout);
+            resolve();
+          });
         });
       }
 
