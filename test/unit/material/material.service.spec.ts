@@ -3,6 +3,7 @@ import { Types } from 'mongoose';
 import { MaterialEntity } from 'src/core/domain/entities';
 import { MaterialRepository } from 'src/core/infrastructure/repositories';
 import { MaterialService } from 'src/modules/materials/services';
+import * as fs from 'fs';
 
 describe('MaterialService', () => {
   let materialService: MaterialService;
@@ -146,7 +147,7 @@ describe('MaterialService', () => {
 
   describe('downloadMaterial', () => {
     it('should download a single material', async () => {
-      jest.spyOn(require('fs'), 'existsSync').mockReturnValue(true);
+      const existsSyncSpy = jest.spyOn(fs, 'existsSync').mockReturnValue(true);
 
       materialRepo.findById.mockResolvedValue(mockMaterial);
 
@@ -154,7 +155,7 @@ describe('MaterialService', () => {
         mockMaterial._id.toString(),
       );
 
-      expect(jest.spyOn(require('fs'), 'existsSync')).toHaveBeenCalledTimes(1);
+      expect(existsSyncSpy).toHaveBeenCalledTimes(1);
       expect(materialRepo.findById).toHaveBeenCalledTimes(1);
 
       expect(result.path).toContain('uploads');

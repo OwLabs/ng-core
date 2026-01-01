@@ -183,7 +183,7 @@ describe('AuthService (Unit)', () => {
   describe('login', () => {
     it('should sign JWT correctly', async () => {
       const userId = new Types.ObjectId('6710f3d40c7b2f4e8d4d9b22');
-      let ctx = {};
+      const ctx = {};
 
       const user: IUser = {
         _id: userId,
