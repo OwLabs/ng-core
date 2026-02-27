@@ -33,6 +33,132 @@ This project follows the [Conventional Commits](https://www.conventionalcommits.
 
 ---
 
+## [2.0.6] — DDD + CQRS Architecture Refactoring (Major)
+
+### Added
+
+#### Domain-Driven Design (DDD) Structure
+
+- Adopted **DDD folder structure** across all modules (`Auth`, `Users`, `Materials`):
+  - `domain/entities/` — rich domain entities with business logic methods
+  - `domain/repositories/` — repository interfaces (contracts)
+  - `domain/types/` — shared domain types (`AuthResult`, `AuthTokens`, `TokenPayload`, `UserResponse`, `MaterialResponse`)
+  - `domain/enums/` — domain enums (`AuthProvider`, `UserRole`, `MaterialType`)
+  - `domain/value-objects/` — value objects (`Email`, `UserName`) in Users module
+  - `infrastructure/repositories/` — concrete repository implementations
+  - `infrastructure/schemas/` — Mongoose schemas (module-scoped)
+  - `presentation/controllers/` — HTTP controllers (presentation layer)
+
+#### CQRS (Command Query Responsibility Segregation)
+
+- Integrated `@nestjs/cqrs` across **Users** and **Materials** modules:
+  - **Users Commands**: `CreateUserCommand`, `UpdateUserRolesCommand`
+  - **Users Queries**: `GetUserByIdQuery`, `GetUserByEmailQuery`, `GetAllUsersQuery`, `GetUserProfileQuery`
+  - **Materials Commands**: `UploadMaterialCommand`, `DeleteMaterialCommand`
+  - **Materials Queries**: `GetAllMaterialsQuery`, `GetMaterialByIdQuery`, `GetStudentMaterialsQuery`
+  - **Materials Events**: `MaterialUploadedEvent`
+- Auth module communicates with Users module via `CommandBus` / `QueryBus` instead of direct repository access
+
+#### Value Objects
+
+- Added `Email` value object with built-in validation
+- Added `UserName` value object with built-in validation
+- Domain entities now use value objects for type-safe field access (e.g. `user.email.getValue()`)
+
+#### Repository Interfaces & DI Tokens
+
+- Defined `IRefreshTokenRepository` interface with DI symbol token (`REFRESH_TOKEN_REPOSITORY`)
+- Defined `IUserRepository` interface with DI symbol token
+- Defined `IMaterialRepository` interface with DI symbol token
+- Repository implementations injected via `{ provide: TOKEN, useClass: Impl }` pattern
+
+#### Utility
+
+- Added `extract-ip.util.ts` for clean IP extraction in Auth presentation layer
+- Added `crypto.ts` utility in `common/utils/`
+- Moved API config enums (`ApiVersionEnum`, `SwaggerVersionEnum`, `ApiPlatformEnum`) to `common/config/`
+
+### Changed
+
+#### Module Architecture
+
+- **Auth Module**: imports `UsersModule` instead of individual `UserRepository` / `UsersService`; registers `RefreshTokenSchema` locally via `MongooseModule.forFeature()`
+- **Users Module**: fully self-contained with own schema, repository, CQRS handlers, and controller
+- **Materials Module**: fully self-contained with own schema, repository, CQRS handlers, and controller
+- **Database Module**: stripped down to only provide the MongoDB connection; no longer registers individual schemas
+
+#### Auth Service Refactoring
+
+- `register()` uses `CommandBus.execute(CreateUserCommand)` instead of direct `UserRepository.create()`
+- `validateUser()` uses `QueryBus.execute(GetUserByEmailQuery)` instead of direct `UserRepository.findByEmail()`
+- `validateGoogleUser()` uses `CommandBus` / `QueryBus` for user lookup and creation
+- `login()` now accepts `UserResponse` type and returns `AuthTokens` type
+- Password hashing salt rounds now **configurable** via `BCRYPT_SALT_ROUNDS` env variable (default: 10)
+- Replaced hardcoded `'local'` / `'google'` strings with `AuthProvider` enum
+- Replaced hardcoded `['user']` role arrays with domain enum defaults
+- Replaced `sanitizeUser()` utility with entity method `user.toResponse()`
+
+#### Refresh Token Service Refactoring
+
+- Uses `IRefreshTokenRepository` interface via `@Inject(REFRESH_TOKEN_REPOSITORY)` instead of concrete class
+- Uses `QueryBus` (`GetUserByIdQuery`) instead of direct `UserRepository` for user lookups
+- `createToken()` returns `Promise<string>` (raw token) instead of object
+- `rotateRefreshToken()` returns `AuthTokens` type instead of `RefreshTokenPayload`
+- `validateRefreshToken()` uses entity methods (`isRevoked()`, `isExpired()`) instead of raw property checks
+- `revokeTokenById()` no longer makes an extra DB call to fetch user name
+
+#### Strategies
+
+- `JwtStrategy`, `LocalStrategy`, `GoogleStrategy` updated to work with new entity/type signatures
+
+#### Roles Guard & Decorator
+
+- Updated `RolesGuard` to align with new `UserExpressRequest` interface
+- Updated `@Roles()` decorator to use new type definitions
+
+### Fixed
+
+#### Security
+
+- **Fixed placeholder hash race condition** in refresh token creation:
+  - **Before**: created a DB record with a placeholder hash, then updated it — leaving an attackable window
+  - **After**: generates token ID upfront, hashes the real token, then creates the DB record in a single atomic write
+- Replaced non-null assertions (`!`) with proper null checks across Auth service
+- Improved error messages (e.g. Google login prompt instead of generic "reset password" message)
+
+#### Type Safety
+
+- Eliminated `IUser` interface usage — replaced with `User` entity and `UserResponse` type
+- Eliminated `RefreshTokenEntity` — replaced with `RefreshToken` domain entity
+- Eliminated `MaterialEntity` — replaced with `Material` domain entity
+- Eliminated `AuthResult` type from old location — moved to `auth/domain/types/`
+
+### Removed
+
+- Removed **centralized `core/domain/`** layer:
+  - `core/domain/entities/` (user, material, refresh-token entities)
+  - `core/domain/interfaces/` (user, material, refresh-token interfaces)
+- Removed **centralized `core/infrastructure/repositories/`**:
+  - `UserRepository`, `MaterialRepository`, `RefreshTokenRepository` (moved into respective modules)
+- Removed **centralized `core/infrastructure/database/schemas/`**:
+  - `user.schema.ts`, `material.schema.ts`, `refresh-token.schema.ts` (moved into respective modules)
+- Removed **`src/api/`** directory:
+  - `api-platform.enum.ts`, `api-version.enum.ts`, `swagger-version.enum.ts` → relocated to `common/config/`
+- Removed `sanitize-user.ts` utility — replaced by entity `toResponse()` method
+- Removed `auth-result.type.ts` from old location — moved to `auth/domain/types/`
+- Removed old controller barrel exports (`auth/controllers/`, `users/controllers/`, `materials/controllers/`) — replaced by `presentation/controllers/`
+- Removed old service barrel exports (`users/services/`, `materials/services/`) — replaced by module-scoped exports
+
+### Notes
+
+- This is a **major architectural refactoring** — the version bump from 1.x to 2.x reflects breaking internal structure changes
+- Each module now **owns its own domain**: entities, schemas, repositories, and presentation
+- Modules communicate through **CQRS boundaries** (CommandBus / QueryBus), not direct imports
+- The centralized `core/` layer is now minimal (database connection only)
+- Future modules should follow the same DDD + CQRS pattern established here
+
+---
+
 ## [1.0.6] — Material Module (Upload, RBAC, Multipart Safety, Tests)
 
 ### Added

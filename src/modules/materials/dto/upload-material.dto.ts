@@ -1,20 +1,36 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+import { MaterialType } from '../domain/enums';
 
 export class UploadMaterialDto {
   @IsString()
   @IsNotEmpty()
   title: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   description: string;
 
-  @IsEnum(['document', 'video'])
-  type: 'document' | 'video';
+  @IsEnum(MaterialType)
+  type: MaterialType;
 
   @IsString()
   @IsNotEmpty()
   subject: string;
+
+  @IsString()
+  @IsNotEmpty()
+  topic: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  assignedTo?: string[];
 
   @IsOptional()
   @IsString()

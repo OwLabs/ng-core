@@ -1,6 +1,6 @@
 import { Reflector } from '@nestjs/core';
 import { RolesGuard } from './roles.guard';
-import { RoleEnum } from '../decorators';
+import { UserRole } from 'src/modules/users/domain/enums';
 
 describe('RolesGuard', () => {
   let reflector: Reflector;
@@ -14,7 +14,7 @@ describe('RolesGuard', () => {
     spyReflector = jest.spyOn(reflector, 'getAllAndOverride');
   });
 
-  function mockContext(roles: RoleEnum[]) {
+  function mockContext(roles: UserRole[]) {
     return {
       switchToHttp: () => ({
         getRequest: () => ({
@@ -29,30 +29,30 @@ describe('RolesGuard', () => {
   it('should allow access if no roles required', async () => {
     spyReflector.mockReturnValue(undefined);
 
-    const result = await guard.canActivate(mockContext([RoleEnum.ADMIN]));
+    const result = await guard.canActivate(mockContext([UserRole.ADMIN]));
     expect(result).toBeTruthy();
     expect(spyReflector).toHaveBeenCalledTimes(1);
   });
 
   it('should allow access when role matches', async () => {
-    spyReflector.mockReturnValue([RoleEnum.SUPER_ADMIN, RoleEnum.ADMIN]);
+    spyReflector.mockReturnValue([UserRole.SUPER_ADMIN, UserRole.ADMIN]);
 
-    const result = await guard.canActivate(mockContext([RoleEnum.ADMIN]));
+    const result = await guard.canActivate(mockContext([UserRole.ADMIN]));
     expect(result).toBeTruthy();
     expect(spyReflector).toHaveBeenCalledTimes(1);
   });
 
   it('should deny access when role does not match', async () => {
-    spyReflector.mockReturnValue([RoleEnum.STUDENT, RoleEnum.PARENT]);
+    spyReflector.mockReturnValue([UserRole.STUDENT, UserRole.PARENT]);
 
     await expect(
-      guard.canActivate(mockContext([RoleEnum.TUTOR])),
+      guard.canActivate(mockContext([UserRole.TUTOR])),
     ).rejects.toThrow();
     expect(spyReflector).toHaveBeenCalledTimes(1);
   });
 
   it('should drain multipart stream before throwing ForbiddenException or HTTP Status Code 403', async () => {
-    spyReflector.mockReturnValue([RoleEnum.ADMIN]);
+    spyReflector.mockReturnValue([UserRole.ADMIN]);
 
     const resumeMock = jest.fn();
     const onMock = jest.fn((event: string, cb: () => void) => {
@@ -65,7 +65,7 @@ describe('RolesGuard', () => {
     const context = {
       switchToHttp: () => ({
         getRequest: () => ({
-          user: { roles: [RoleEnum.TUTOR] }, // User does not have required role
+          user: { roles: [UserRole.TUTOR] }, // User does not have required role
           readable: true, // Simulate multipart / stream request
           readableEnded: false,
           resume: resumeMock, // Used to drain the stream
