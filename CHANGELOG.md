@@ -33,6 +33,14 @@ This project follows the [Conventional Commits](https://www.conventionalcommits.
 
 ---
 
+## [2.0.7] — PR template
+
+### Added
+
+- Added PR template
+
+---
+
 ## [2.0.6] — DDD + CQRS Architecture Refactoring (Major)
 
 ### Added
