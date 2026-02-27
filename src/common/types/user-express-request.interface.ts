@@ -1,6 +1,6 @@
 import { Request } from 'express';
 import { Readable } from 'stream';
-import { RoleEnum } from '../decorators';
+import { UserRole } from 'src/modules/users/domain/enums';
 
 /**
  * Extended Express Request interface that includes:
@@ -8,9 +8,9 @@ import { RoleEnum } from '../decorators';
  * - User authentication data attached by JwtAuthGuard
  */
 export interface UserExpressRequest extends Request, Readable {
-  user?: {
+  user: {
     userId: string;
     email: string;
-    roles: RoleEnum[];
+    roles: UserRole[];
   };
 }

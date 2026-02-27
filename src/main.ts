@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { VersioningType } from '@nestjs/common';
-import { ApiVersionEnum, SwaggerVersionEnum } from './api';
+import { ApiVersionEnum, SwaggerVersionEnum } from './common/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {

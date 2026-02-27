@@ -1,6 +1,6 @@
 {
   "name": "ng-core",
-  "version": "1.0.6",
+  "version": "2.0.6",
   "description": "source for NeuralGuru's core",
   "author": "NeuralGuru",
   "private": true,
@@ -25,7 +25,9 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json --colors --runInBand --logHeapUsage --detectOpenHandles"
+    "test:e2e": "jest --config ./test/jest-e2e.json --colors --runInBand --logHeapUsage --detectOpenHandles",
+    "docs": "compodoc -p tsconfig.json -s --theme material",
+    "docs:dev": "compodoc -p tsconfig.json -s -w --disableSourceCode"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -64,6 +66,7 @@
     "@nestjs/testing": "^11.0.1",
     "@swc/cli": "^0.6.0",
     "@swc/core": "^1.10.7",
+    "@types/body-parser": "^1.19.6",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",

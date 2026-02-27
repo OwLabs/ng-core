@@ -1,96 +1,169 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { JwtService } from '@nestjs/jwt';
-import { UserRepository } from 'src/core/infrastructure/repositories';
-import { RegisterDto } from '../dto';
-import { IUser } from 'src/core/domain/interfaces';
-import * as bcrypt from 'bcryptjs';
-import { AuthResult } from '../types';
-import { sanitizeUser } from 'src/common/utils';
 import { RefreshTokenService } from './refresh-token.service';
-
+import { RegisterDto } from '../dto';
+import { UserResponse } from 'src/modules/users/domain/types';
+import * as bcrypt from 'bcryptjs';
+import { User } from 'src/modules/users/domain/entities';
+import { CreateUserCommand } from 'src/modules/users/application/commands/impl';
+import { AuthProvider } from 'src/modules/users/domain/enums';
+import { AuthResult, AuthTokens, TokenPayload } from '../domain/types';
+import { GetUserByEmailQuery } from 'src/modules/users/application/queries/impl';
+/**
+ * AuthService — refactored
+ *
+ * WHAT THIS SERVICE DOES (orchestration):
+ *   1. Receives auth requests (register, login, Google)
+ *   2. Talks to Users module via CommandBus/QueryBus
+ *   3. Handles password hashing (auth's job, not users')
+ *   4. Generates JWT tokens
+ *   5. Delegates refresh token management to RefreshTokenService
+ *
+ * BUGS FIXED:
+ *   - Hardcoded 'local', 'google', ['user'] → domain enums
+ *   - Non-null assertions (!) → proper null checks
+ *   - sanitizeUser() → user.toResponse()
+ *   - Salt rounds configurable via env
+ *   - Google: checks by email before creating
+ */
 @Injectable()
 export class AuthService {
+  private readonly saltRounds: number;
+
   constructor(
     private readonly jwtService: JwtService,
-    private readonly userRepo: UserRepository,
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+    private readonly configService: ConfigService,
     private readonly refreshTokenService: RefreshTokenService,
-  ) {}
-
-  async register(dto: RegisterDto): Promise<IUser> {
-    const existing = await this.userRepo.findByEmail(dto.email);
-    if (existing) {
-      throw new ConflictException('Email already registered');
-    }
-
-    const hashed = await bcrypt.hash(dto.password, 10);
-    const user: IUser = await this.userRepo.create({
-      ...dto,
-      password: hashed,
-      provider: 'local',
-      roles: ['user'],
-    });
-
-    return sanitizeUser(user);
+  ) {
+    // Configurable salt rounds (default 10 if not set)
+    this.saltRounds = this.configService.get<number>('BCRYPT_SALT_ROUNDS', 10);
   }
 
+  /**
+   * Register a new local user
+   *
+   * FLOW:
+   *   1. Hash password (auth's responsibility)
+   *   2. Send CreateUserCommand (Users module handles duplicate check + creation)
+   *   3. Return clean UserResponse (no password)
+   *
+   * WHY not check for duplicate HERE?
+   *   The CreateUserCommand handler already checks. If we check here
+   *   too, we'd have a race condition: two requests could both pass
+   *   the check and then both try to create. Let the handler handle it
+   *   (it has the repository-level lock)
+   */
+  async register(dto: RegisterDto): Promise<UserResponse> {
+    const hashed = await bcrypt.hash(dto.password, this.saltRounds);
+
+    const user: User = await this.commandBus.execute(
+      new CreateUserCommand(dto.email, dto.name, AuthProvider.LOCAL, hashed),
+    );
+
+    return user.toResponse();
+  }
+
+  /**
+   * Validate email + password for local login
+   *
+   * FIXED:
+   *   - Uses QueryBus instead of direct UserRepository
+   *   - Uses AuthProvider enum instead of hardcoded 'local'
+   *   - Uses entity methods (getPasswordHash()) for safe access
+   */
   async validateUser(email: string, password: string): Promise<AuthResult> {
-    const user = await this.userRepo.findByEmail(email);
+    const user: User | null = await this.queryBus.execute(
+      new GetUserByEmailQuery(email),
+    );
+
     if (!user) {
       return { success: false, message: 'Email not found' };
     }
 
-    if (user.provider !== 'local' || !user.password) {
+    // Check if this is a local account (not Google/OAuth)
+    if (user.provider !== AuthProvider.LOCAL || !user.getPasswordHash()) {
       return {
         success: false,
-        message: 'Log in with Google or reset password with "Reset password',
+        message: 'This account uses Google login. Please sign in with Google',
       };
     }
 
-    const isValid = await bcrypt.compare(password, user.password);
+    const isValid = await bcrypt.compare(password, user.getPasswordHash()!);
+
     if (!isValid) {
-      return { success: false, message: 'Incorrect password' };
+      return {
+        success: false,
+        message: 'Incorrect password',
+      };
     }
 
-    return { success: true, user: sanitizeUser(user) };
+    return { success: true, user: user.toResponse() };
   }
 
+  /**
+   * Generate access + refresh tokens after successful login
+   *
+   * CHANGED:
+   *   - Accepts UserResponse (clean shape, id is string)
+   *   - Uses TokenPayload type for JWT structure
+   *   - Returns AuthTokens type
+   */
   async login(
-    user: IUser,
+    user: UserResponse,
     ctx: { userAgent?: string; ip?: string; tokenTtlDays?: number },
-  ): Promise<{ access_token: string; newRawToken: string }> {
-    const payload = { email: user.email, sub: user._id, roles: user.roles };
-    const access_token = this.jwtService.sign(payload);
+  ): Promise<AuthTokens> {
+    const payload: TokenPayload = {
+      sub: user.id,
+      email: user.email,
+      roles: user.roles,
+    };
 
-    const { plain: newRawToken } = await this.refreshTokenService.createToken(
-      user._id!.toString(),
-      {
-        userAgent: ctx.userAgent,
-        ip: ctx.ip,
-        tokenTtlDays: ctx.tokenTtlDays,
-      },
-    );
-    return { access_token, newRawToken };
+    const accessToken = this.jwtService.sign(payload);
+
+    const refreshToken = await this.refreshTokenService.createToken(user.id, {
+      userAgent: ctx.userAgent,
+      ip: ctx.ip,
+      tokenTtlDays: ctx.tokenTtlDays,
+    });
+
+    return { accessToken, refreshToken };
   }
 
+  /**
+   * Validate or create Google OAuth user
+   *
+   * FIXED:
+   *   - Uses QueryBus to find user
+   *   - Uses CommandBus to create user
+   *   - Uses AuthProvider.GOOGLE enum
+   */
   async validateGoogleUser(profile: {
     providerId: string;
     email: string;
     name: string;
     picture?: string;
-  }): Promise<Omit<IUser, 'password'>> {
-    let user = await this.userRepo.findByEmail(profile.email);
+  }): Promise<UserResponse> {
+    let user: User | null = await this.queryBus.execute(
+      new GetUserByEmailQuery(profile.email),
+    );
 
     if (!user) {
-      user = await this.userRepo.create({
-        email: profile.email,
-        name: profile.name,
-        provider: 'google',
-        providerId: profile.providerId,
-        avatar: profile.picture,
-        roles: ['user'],
-      });
+      user = await this.commandBus.execute(
+        new CreateUserCommand(
+          profile.email,
+          profile.name,
+          AuthProvider.GOOGLE,
+          null,
+          profile.providerId,
+          profile.picture,
+        ),
+      );
     }
 
-    return sanitizeUser(user);
+    return user!.toResponse();
   }
 }

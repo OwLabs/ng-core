@@ -5,7 +5,8 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { RoleEnum, ROLES_KEY } from '../decorators';
+import { ROLES_KEY } from '../decorators';
+import { UserRole } from 'src/modules/users/domain/enums';
 import { UserExpressRequest } from '../types';
 
 @Injectable()
@@ -13,7 +14,7 @@ export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredRoles = this.reflector.getAllAndOverride<RoleEnum[]>(
+    const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(
       ROLES_KEY,
       [context.getHandler(), context.getClass()],
     );
@@ -25,7 +26,7 @@ export class RolesGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<UserExpressRequest>();
     const { user } = request;
 
-    const userRoles: RoleEnum[] = user?.roles ?? [];
+    const userRoles: UserRole[] = user?.roles ?? [];
 
     const hasRole = requiredRoles.some((role) => userRoles.includes(role));
 
