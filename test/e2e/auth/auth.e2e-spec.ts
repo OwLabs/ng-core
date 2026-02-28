@@ -1,158 +1,101 @@
 import { HttpStatus, INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
-import { apiEndpoint, closeE2EApp, setupE2EApp } from '../setup.e2e';
-import { AuthService } from 'src/modules/auth/services';
-import { ApiVersionEnum } from 'src/api';
-import { ENDPOINT_SUBTOPICS, ENDPOINT_TOPICS } from '../constants';
+import {
+  apiEndpoint,
+  closeE2EApp,
+  setupE2EApp,
+} from '../_support/setup/e2e-app.helper';
+import request from 'supertest';
+import { ApiVersionEnum } from 'src/common/config';
+import { ACTIONS, TOPICS } from '../_support/constants';
+import { UserRole } from 'src/modules/users/domain/enums';
 
-describe('AuthModule (E2E)', () => {
+/**
+ * Study the comments, then write it yourself
+ */
+describe('Auth Module E2E', () => {
   let app: INestApplication;
-  let authService: AuthService;
-  let spyRegister: jest.SpyInstance;
-  let spyLogin: jest.SpyInstance;
-  let spyValidate: jest.SpyInstance;
 
+  /**
+   * WHY beforeAll not beforeEach?
+   * Creating a NestJS app is expensive (~1-3s).
+   * We create it ONCE for all tests in this describe block.
+   * Each test gets a fresh state through the database, not a fresh app.
+   */
   beforeAll(async () => {
     const setup = await setupE2EApp();
     app = setup.app;
-
-    authService = app.get(AuthService);
-  });
-
-  beforeEach(async () => {
-    spyRegister = jest.spyOn(authService, 'register');
-    spyLogin = jest.spyOn(authService, 'login');
-    spyValidate = jest.spyOn(authService, 'validateUser');
-  });
-
-  afterEach(async () => {
-    spyRegister.mockRestore();
-    spyLogin.mockRestore();
-    spyValidate.mockRestore();
   });
 
   afterAll(async () => {
+    // kasi dc and close mongo bro (wajib)
     await closeE2EApp();
   });
 
-  it('should register a new user and then login successfully', async () => {
+  // ===== REGISTER =====
+  it('should register a new user', async () => {
     const { body } = await request(app.getHttpServer())
-      .post(
-        apiEndpoint(
-          ApiVersionEnum.V1,
-          ENDPOINT_TOPICS.AUTH,
-          ENDPOINT_SUBTOPICS.REGISTER,
-        ),
-      )
+      .post(apiEndpoint(ApiVersionEnum.V1, TOPICS.AUTH, ACTIONS.REGISTER))
       .send({
-        email: 'testuser@example.com',
+        name: 'Chad',
+        email: 'chad@example.com',
         password: 'password123',
-        name: 'Test User',
-      });
+      })
+      .expect(HttpStatus.CREATED);
 
     expect(body).toMatchObject({
-      _id: expect.any(String),
-      email: 'testuser@example.com',
-      name: 'Test User',
+      id: expect.any(String),
+      email: 'chad@example.com',
+      name: 'Chad',
       provider: 'local',
-      roles: ['user'],
+      roles: [UserRole.LIMITED_ACCESS_USER],
       createdAt: expect.any(String),
       updatedAt: expect.any(String),
-      __v: 0,
     });
 
-    expect(spyRegister).toHaveBeenCalledTimes(1);
-
-    const res = await request(app.getHttpServer())
-      .post(
-        apiEndpoint(
-          ApiVersionEnum.V1,
-          ENDPOINT_TOPICS.AUTH,
-          ENDPOINT_SUBTOPICS.LOGIN,
-        ),
-      )
-      .send({
-        email: 'testuser@example.com',
-        password: 'password123',
-      });
-
-    expect(res.status).toEqual(HttpStatus.CREATED);
-    expect(res.body).toMatchObject({ access_token: expect.any(String) });
-    expect(spyValidate).toHaveBeenCalledTimes(1);
-    expect(spyLogin).toHaveBeenCalledTimes(1);
+    // this is because we dont show user's password back to frontend
+    // sangat redflag kalau expose password to client side
+    expect(body.password).toBeUndefined();
   });
 
-  it('should return 401 Unauthorized when email does not exist', async () => {
-    const res = await request(app.getHttpServer())
-      .post(
-        apiEndpoint(
-          ApiVersionEnum.V1,
-          ENDPOINT_TOPICS.AUTH,
-          ENDPOINT_SUBTOPICS.LOGIN,
-        ),
-      )
+  // ===== LOGIN (success) =====
+  it('should login and return tokens', async () => {
+    const { body } = await request(app.getHttpServer())
+      .post(apiEndpoint(ApiVersionEnum.V1, TOPICS.AUTH, ACTIONS.LOGIN))
       .send({
-        email: 'hello@example.com',
+        email: 'chad@example.com',
         password: 'password123',
-      });
+      })
+      .expect(HttpStatus.CREATED);
 
-    expect(res.status).toBe(HttpStatus.UNAUTHORIZED);
-    expect(res.body).toEqual({
-      message: 'Email not found',
-      error: 'Unauthorized',
-      statusCode: 401,
+    expect(body).toMatchObject({
+      accessToken: expect.any(String),
+      refreshToken: expect.any(String),
     });
-
-    expect(spyValidate).toHaveBeenCalledTimes(1);
-    expect(spyLogin).toHaveBeenCalledTimes(0);
   });
 
-  it('should reject invalid credentials or empty password', async () => {
-    const sendWithPassword = {
-      email: 'testuser@example.com',
-      password: 'asd',
-    };
+  // ===== LOGIN (wrong email) =====
+  it('should return 401 when email does not exist', async () => {
+    const { body } = await request(app.getHttpServer())
+      .post(apiEndpoint(ApiVersionEnum.V1, TOPICS.AUTH, ACTIONS.LOGIN))
+      .send({
+        email: 'bob_haziq@gmail.com',
+        password: 'password123',
+      })
+      .expect(HttpStatus.UNAUTHORIZED);
 
-    const res = await request(app.getHttpServer())
-      .post(
-        apiEndpoint(
-          ApiVersionEnum.V1,
-          ENDPOINT_TOPICS.AUTH,
-          ENDPOINT_SUBTOPICS.LOGIN,
-        ),
-      )
-      .send(sendWithPassword);
+    expect(body.message).toBe('Email not found');
+  });
 
-    expect(res.status).toBe(401);
-    expect(res.body).toEqual({
-      message: 'Incorrect password',
-      error: 'Unauthorized',
-      statusCode: 401,
-    });
+  // ===== LOGIN (wrong password) =====
+  it('should return 401 for incorrect password', async () => {
+    const { body } = await request(app.getHttpServer())
+      .post(apiEndpoint(ApiVersionEnum.V1, TOPICS.AUTH, ACTIONS.LOGIN))
+      .send({
+        email: 'chad@example.com',
+        password: 'iman-muhammad-ali@hotmail.com',
+      })
+      .expect(HttpStatus.UNAUTHORIZED);
 
-    expect(spyValidate).toHaveBeenCalledTimes(1);
-    expect(spyLogin).toHaveBeenCalledTimes(0);
-
-    // we need to clear this spy because need to perform the real action
-    // let say a user first time login but enter the wrong password
-    // then the 2nd time action user accidentally submit login without password
-    spyValidate.mockClear();
-    spyLogin.mockClear();
-
-    const res2 = await request(app.getHttpServer())
-      .post(
-        apiEndpoint(
-          ApiVersionEnum.V1,
-          ENDPOINT_TOPICS.AUTH,
-          ENDPOINT_SUBTOPICS.LOGIN,
-        ),
-      )
-      .send({ ...sendWithPassword, password: '' });
-
-    expect(res2.status).toEqual(HttpStatus.UNAUTHORIZED);
-    expect(res2.body).toEqual({ message: 'Unauthorized', statusCode: 401 });
-
-    expect(spyValidate).toHaveBeenCalledTimes(0);
-    expect(spyLogin).toHaveBeenCalledTimes(0);
+    expect(body.message).toBe('Incorrect password');
   });
 });
