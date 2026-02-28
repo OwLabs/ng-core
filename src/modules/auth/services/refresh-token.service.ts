@@ -183,7 +183,7 @@ export class RefreshTokenService {
 
     return {
       message: token
-        ? 'Session hgas been revoked successfully'
+        ? 'Session has been revoked successfully'
         : `Token ${id} not found`,
     };
   }
