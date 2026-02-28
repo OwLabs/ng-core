@@ -13,6 +13,7 @@ import {
 import { AuthService, RefreshTokenService } from './services';
 import { REFRESH_TOKEN_REPOSITORY } from './domain/repositories';
 import { RefreshTokenRepositoryImpl } from './infrastructure/repositories';
+import { GoogleStrategy, JwtStrategy, LocalStrategy } from './strategies';
 
 /**
  * AuthModule — rewired
@@ -64,6 +65,11 @@ import { RefreshTokenRepositoryImpl } from './infrastructure/repositories';
       provide: REFRESH_TOKEN_REPOSITORY,
       useClass: RefreshTokenRepositoryImpl,
     },
+    // Passport strategies — must be registered as providers
+    // so NestJS instantiates them and they register with Passport
+    LocalStrategy,
+    JwtStrategy,
+    GoogleStrategy,
   ],
 
   exports: [AuthService, RefreshTokenService],

@@ -1,4 +1,10 @@
-export const ENDPOINT_SUBTOPICS = {
+export const TOPICS = {
+  AUTH: 'auth',
+  USERS: 'users',
+  MATERIAL: 'material',
+} as const;
+
+export const ACTIONS = {
   REGISTER: 'register',
   LOGIN: 'login',
   PROFILE: 'profile',
@@ -7,4 +13,5 @@ export const ENDPOINT_SUBTOPICS = {
   LOGOUT_ALL_DEVICES: 'logout-all-devices',
   UPLOAD: 'upload',
   DOWNLOAD: 'download',
-};
+  MY_MATERIALS: 'my-materials',
+} as const;
