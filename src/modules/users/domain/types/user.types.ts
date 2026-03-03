@@ -21,6 +21,7 @@ export interface UserProps {
   providerId?: string | null;
   avatar?: string | null;
   roles?: UserRole[];
+  isVerified?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -44,6 +45,7 @@ export interface CreateUserProps {
   provider: AuthProvider;
   providerId?: string | null;
   avatar?: string | null;
+  isVerified?: boolean;
 }
 
 /**
@@ -66,6 +68,7 @@ export interface UserPersistenceProps {
   provider: string;
   providerId?: string | null;
   avatar?: string | null;
+  isVerified: boolean;
   roles: string[];
   createdAt: Date;
   updatedAt: Date;
@@ -86,6 +89,7 @@ export interface UserToPersistence {
   password: string | null;
   provider: string;
   providerId: string | null;
+  isVerified: boolean;
   avatar: string | null;
   roles: string[];
   createdAt: Date;
@@ -110,6 +114,7 @@ export interface UserResponse {
   provider: string;
   providerId?: string | null;
   avatar?: string | null;
+  isVerified: boolean;
   roles: string[];
   createdAt: Date;
   updatedAt: Date;

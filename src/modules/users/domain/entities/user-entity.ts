@@ -57,6 +57,7 @@ export class User {
   private _providerId: string | null;
   private _avatar: string | null;
   private _roles: UserRole[];
+  private _isVerified: boolean;
   private readonly _createdAt: Date;
   private _updatedAt: Date;
 
@@ -73,6 +74,7 @@ export class User {
     this._providerId = props.providerId ?? null;
     this._avatar = props.avatar ?? null;
     this._roles = props.roles ?? [UserRole.LIMITED_ACCESS_USER];
+    this._isVerified = props.isVerified ?? false;
     this._createdAt = props.createdAt ?? new Date();
     this._updatedAt = props.updatedAt ?? new Date();
   }
@@ -102,6 +104,7 @@ export class User {
       password: props.password ?? null,
       provider: props.provider,
       providerId: props.providerId ?? null,
+      isVerified: props.isVerified ?? false,
       avatar: props.avatar ?? null,
       roles: [UserRole.LIMITED_ACCESS_USER],
     });
@@ -123,6 +126,7 @@ export class User {
       provider: props.provider as AuthProvider,
       providerId: props.providerId ?? null,
       avatar: props.avatar ?? null,
+      isVerified: props.isVerified ?? false,
       roles: props.roles.map((r) => r as UserRole),
       createdAt: props.createdAt,
       updatedAt: props.updatedAt,
@@ -235,6 +239,10 @@ export class User {
     return this.hasRole(UserRole.SUPER_ADMIN) || this.hasRole(UserRole.ADMIN);
   }
 
+  verify(): boolean {
+    return (this._isVerified = true);
+  }
+
   /**
    * Get password hash — ONLY for authentication checks.
    * WHY A METHOD instead of a getter?
@@ -260,6 +268,7 @@ export class User {
       name: this._name.getValue(),
       provider: this._provider,
       providerId: this._providerId,
+      isVerified: this._isVerified,
       avatar: this._avatar,
       roles: [...this._roles],
       createdAt: this._createdAt,
@@ -280,6 +289,7 @@ export class User {
       password: this._password,
       provider: this._provider,
       providerId: this._providerId,
+      isVerified: this._isVerified,
       avatar: this._avatar,
       roles: [...this._roles],
       createdAt: this._createdAt,

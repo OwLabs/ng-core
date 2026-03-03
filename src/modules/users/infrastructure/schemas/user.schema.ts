@@ -23,6 +23,9 @@ export class User extends Document {
 
   @Prop({ type: [String], default: ['user'] })
   roles?: string[];
+
+  @Prop({ type: Boolean, default: false })
+  isVerified: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
