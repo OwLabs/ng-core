@@ -14,6 +14,10 @@ import { AuthService, RefreshTokenService } from './services';
 import { REFRESH_TOKEN_REPOSITORY } from './domain/repositories';
 import { RefreshTokenRepositoryImpl } from './infrastructure/repositories';
 import { GoogleStrategy, JwtStrategy, LocalStrategy } from './strategies';
+import { EMAIL_SERVICE } from './domain/email-service.interface';
+import { ConsoleEmailService } from './infrastructure/console-email/console-email.service';
+import { NodemailerEmailService } from './infrastructure/nodemailer-email/nodemailer-email.service';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 /**
  * AuthModule — rewired
@@ -52,6 +56,23 @@ import { GoogleStrategy, JwtStrategy, LocalStrategy } from './strategies';
       }),
       inject: [ConfigService],
     }),
+
+    MailerModule.forRootAsync({ 
+      useFactory: async (config: ConfigService) => ({
+        transport: {
+          host: config.get('SMTP_HOST', 'smtp.ethereal.email'),
+          port: config.get('SMTP_PORT', 587),
+          auth: {
+            user: config.get('SMTP_USER'),
+            pass: config.get('SMTP_PASS'),
+          },
+        },
+        defaults: {
+          from: config.get('SMTP_FROM', '"ng-core" <noreply@example.com>'),
+        },
+      }),
+      inject: [ConfigService],
+    }),
   ],
 
   controllers: [AuthController, GoogleAuthController],
@@ -70,6 +91,13 @@ import { GoogleStrategy, JwtStrategy, LocalStrategy } from './strategies';
     LocalStrategy,
     JwtStrategy,
     GoogleStrategy,
+    {
+      provide: EMAIL_SERVICE,
+      useClass:
+        process.env.NODE_ENV === 'production'
+          ? NodemailerEmailService
+          : ConsoleEmailService,
+    }
   ],
 
   exports: [AuthService, RefreshTokenService],
