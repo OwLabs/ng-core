@@ -159,6 +159,7 @@ export class AuthService {
           AuthProvider.GOOGLE,
           null,
           profile.providerId,
+          true,
           profile.picture,
         ),
       );
