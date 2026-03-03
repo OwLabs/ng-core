@@ -96,6 +96,7 @@ export class UserRepositoryImpl implements IUserRepository {
       provider: doc.provider ?? AuthProvider.LOCAL,
       providerId: doc.providerId ?? null,
       avatar: doc.avatar ?? null,
+      isVerified: doc.isVerified ?? false,
       roles: doc.roles ?? [UserRole.LIMITED_ACCESS_USER],
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
