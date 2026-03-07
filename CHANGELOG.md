@@ -33,6 +33,63 @@ This project follows the [Conventional Commits](https://www.conventionalcommits.
 
 ---
 
+## [2.0.8] — Test Infrastructure Rebuild + Bug Fixes
+
+### Added
+
+### Test Infrastructure (Rebuilt from Scratch)
+
+- Migrated test transformer from `ts-jest` to `@swc/jest` (5-10x faster compilation)
+- Implemented **global MongoMemoryServer** via Jest `globalSetup`/`globalTeardown` (1 instance instead of 7)
+- Created `test/e2e/_support/` structure for shared test infrastructure:
+  - `setup/global-setup.ts` — starts single MongoMemoryServer
+  - `setup/global-teardown.ts` — stops it
+  - `setup/e2e-app.helper.ts` — NestJS app bootstrapping + `apiEndpoint()` helper
+  - `constants/endpoints.constant.ts` — endpoint topics & actions
+  - `helpers/auth.helper.ts` — `registerAndLogin()` reusable helper
+
+### Changed
+
+- `npm run test` now runs `npm run unit && npm run e2e` (was bare `jest` with no config)
+- `npm run e2e` removed `--testTimeout=70000` (no longer needed with shared MongoMemoryServer)
+- Removed `transformIgnorePatterns` from unit config (re-added to both for `uuid` ESM compatibility)
+- Update `pull_request_template.md`
+
+### Added (Testing)
+
+#### E2E Tests (All rewritten for DDD + CQRS)
+
+- `auth.e2e-spec.ts` — register, login, wrong email, wrong password
+- `auth-refresh.e2e-spec.ts` — token rotation, logout, logout-all-devices, JWT requirement
+- `auth-users.e2e-spec.ts` — RBAC (admin list users, student forbidden, profile access)
+- `material.e2e-spec.ts` — upload (tutor), upload forbidden (student), list, view single
+
+#### Unit Tests
+
+- `auth.service.spec.ts` — register, validateUser, login (mocking CommandBus/QueryBus)
+- `refresh-token.service.spec.ts` — createToken, validateRefreshToken, rotateRefreshToken, revokeTokenById, revokeAllForUser
+- `user-entity.spec.ts` — create, updateRoles, changeName, changeEmail, updateAvatar, hasRole, isAdmin, getPasswordHash, toResponse
+- `refresh-token-entity.spec.ts` — create, isExpired, isRevoked, isValid, revoke
+- `material-entity.spec.ts` — create, toResponse, toPersistence, assignTo (deduplication), isAssignedTo
+
+### Fixed
+
+- **Passport strategies not registered** — added `LocalStrategy`, `JwtStrategy`, `GoogleStrategy` to `auth.module.ts` providers (login was broken without them)
+- **Typo in refresh-token.service.ts** — `"hgas"` → `"has"` in revoke message
+- **Refresh token validation** — changed `parts.length < 2` to `parts.length <= 2` (stricter format check)
+- **Revoked token reuse** — now throws `UnauthorizedException('Refresh token reuse detected')` after revoking all user sessions (was silently continuing)
+
+### Removed
+
+- Deleted all legacy test files (19 files) with broken imports to `src/api`, `src/core/domain/*`, and removed services
+
+### Notes
+
+- E2E test time reduced from ~60s+ to ~7s (single MongoMemoryServer + @swc/jest)
+- 55 unit tests + 16 E2E tests = **71 total tests**, all passing
+
+---
+
 ## [2.0.7] — PR template
 
 ### Added

@@ -24,6 +24,6 @@ export interface IRefreshTokenRepository {
   /** Revoke ALL tokens for a user (logout all devices) */
   revokeAllForUser(userId: string): Promise<void>;
 
-  /** Update the token hashsh (used during rotation) */
+  /** Update the token hashed (used during rotation) */
   updateTokenHash(id: string, newHash: string): Promise<void>;
 }

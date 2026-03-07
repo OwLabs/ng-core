@@ -1,6 +1,7 @@
 import { INestApplication, VersioningType } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import mongoose from 'mongoose';
+import { getConnectionToken } from '@nestjs/mongoose';
+import mongoose, { Connection } from 'mongoose';
 import { AppModule } from 'src/app.module';
 import { ApiVersionEnum } from 'src/common/config';
 
@@ -24,6 +25,15 @@ export async function setupE2EApp(): Promise<{ app: INestApplication }> {
   });
 
   await app.init();
+
+  // Get the connection NestJS actually uses (not the global mongoose import)
+  const connection = app.get<Connection>(getConnectionToken());
+  const db = connection.db!;
+
+  const collections = await db.collections();
+  for (const collection of collections) {
+    await collection.deleteMany({});
+  }
 
   return { app };
 }

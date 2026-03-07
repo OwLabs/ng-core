@@ -91,7 +91,7 @@ export class RefreshTokenService {
   async validateRefreshToken(rawToken: string): Promise<RefreshToken> {
     const parts = rawToken.split('.');
 
-    if (parts.length < 2) {
+    if (parts.length <= 2) {
       throw new UnauthorizedException('Invalid token format');
     }
 
@@ -106,6 +106,8 @@ export class RefreshTokenService {
     if (record.isRevoked()) {
       // Possible token theft - revoke ALL tokens for this user
       await this.refreshTokenRepo.revokeAllForUser(record.userId.toString());
+
+      throw new UnauthorizedException('Refresh token reuse detected');
     }
 
     if (record.isExpired()) {
