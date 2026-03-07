@@ -40,6 +40,8 @@ describe('Auth Refresh Tokens E2E', () => {
     });
 
     expect(body.refreshToken).not.toBe(data?.refreshToken);
+
+    data!.refreshToken = body.refreshToken;
   });
 
   it('should logout successfully', async () => {

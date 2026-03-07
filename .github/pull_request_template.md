@@ -32,24 +32,6 @@
 
 ---
 
-## ⚡ Performance Impact
-
-- [ ] No impact
-- [ ] Minor impact
-- [ ] Significant impact (explain below)
-
-<!-- Lighthouse score, bundle size, etc. -->
-
----
-
-## 🧩 Dependencies
-
-- [ ] No new dependencies
-- [ ] New dependencies added
-- [ ] Existing dependencies updated
-
----
-
 ## Notes
 
 <!-- Anything reviewers should pay attention to -->

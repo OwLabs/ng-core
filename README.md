@@ -1,31 +1,112 @@
-# 🧠 NeuralGuru Backend (`ng-backend`)
+# 🧠 NeuralGuru Core (`ng-core`)
 
 ## Overview
 
-`ng-backend` is the core backend service of the **NeuralGuru** platform — a virtual learning environment (VLE) that manages users, materials, assessments, tutor scheduling, analytics, and integrations with external microservices.
+`ng-core` is the **main backend service** of the **NeuralGuru** platform — a virtual learning environment (VLE) built as a microservices system.
 
-This service exposes RESTful APIs for the frontend applications and communicates with supporting microservices such as `ng-payment` for financial transactions.
+As the central hub, `ng-core` handles core business logic (users, materials, assessments, scheduling, analytics) and orchestrates communication between the other NeuralGuru services.
+
+---
+
+## NeuralGuru Ecosystem
+
+```
+ng-web (Frontend)
+    ↓
+ng-core (Main Backend)   ← this repo
+    ↓
+    ├── ng-payment (Payment Service)
+    └── ng-ai (AI Backend)
+```
+
+| Service       | Description                                                    |
+| ------------- | -------------------------------------------------------------- |
+| `ng-web`      | Frontend — Next.js (web), React Native / Flutter (mobile)      |
+| **`ng-core`** | **Main backend — core business logic & service orchestration** |
+| `ng-payment`  | Payment gateways — Stripe, Billplz, SenangPay, IPay88          |
+| `ng-ai`       | AI-powered features — RAG (Retrieval-Augmented Generation)     |
 
 ---
 
 ## Architecture
 
-- **Framework:** NestJS (Modular Monolith with microservice-ready design)
-- **Database:** MongoDB (via Mongoose)
-- **File Storage:** AWS S3
-- **Microservices:**
-  - `ng-payment` — external service handling payment processing and gateway integrations
-  - Future services may include AI diagnostics or notification handlers
+|                     |                                               |
+| ------------------- | --------------------------------------------- |
+| **Framework**       | NestJS (Modular Monolith, microservice-ready) |
+| **Design Patterns** | CQRS + DDD + OOP                              |
+| **Database**        | MongoDB (Mongoose)                            |
+| **Storage**         | AWS S3                                        |
+| **Authentication**  | JWT / Passport (Local, JWT, Google OAuth)     |
+| **API Docs**        | Swagger (`@nestjs/swagger`), Compodoc         |
+| **Testing**         | Jest + @swc/jest, mongodb-memory-server       |
 
-### High-Level Architecture
+### Design Principles
 
-```bash
-Frontend (Next.js / React Native)
-       ↓
-   ng-backend (Core API & Business Logic)
-       ↓
-   ├── ng-payment (Payment Service)
-   └── Future Services (AI, Notifications, etc.)
+- **CQRS** — Commands (writes) and Queries (reads) are separated into distinct handlers via `@nestjs/cqrs`, with support for domain Events
+- **DDD** — Each module is structured into `domain`, `application`, `infrastructure`, and `presentation` layers. Business rules live in rich domain entities, not services
+- **OOP** — Entities use private fields with read-only getters, private constructors with factory methods, and immutable value objects for type safety
+
+### Dependency Flow
+
+```
+Presentation (Controllers)
+    → Application (Command/Query Handlers)
+        → Domain (Entities, Value Objects, Repository Interfaces)
+            ← Infrastructure (Mongoose Repositories, Schemas)
+```
+
+> Domain has zero framework dependencies. Infrastructure implements domain contracts via NestJS DI.
+
+---
+
+## Project Structure
+
+```
+ng-core/
+├── src/
+│   ├── main.ts                          # App bootstrap, versioning, Swagger
+│   ├── app.module.ts                    # Root module
+│   │
+│   ├── core/
+│   │   └── infrastructure/
+│   │       └── database/                # DatabaseModule (MongoDB connection)
+│   │
+│   ├── common/
+│   │   ├── config/                      # API & Swagger version enums
+│   │   ├── decorators/                  # @Roles() decorator
+│   │   ├── guards/                      # JwtAuthGuard, RolesGuard
+│   │   ├── types/                       # Shared interfaces
+│   │   └── utils/                       # Crypto utilities
+│   │
+│   └── modules/
+│       ├── auth/                        # Authentication & authorization
+│       ├── users/                       # User management (CQRS)
+│       └── materials/                   # Learning materials (CQRS + Events)
+│
+├── test/
+│   ├── e2e/                             # E2E test specs
+│   │   └── _support/                    # Helpers, setup, constants
+│   ├── unit/                            # Unit tests
+│   └── fixtures/                        # Test fixtures
+│
+├── package.json
+├── tsconfig.json
+└── README.md
+```
+
+### Module Layers (DDD)
+
+Each module follows a consistent layered structure:
+
+```
+module/
+├── domain/              # Business logic — entities, value objects, enums, repository interfaces, types
+├── application/         # Use cases — commands/, queries/, events/ (each with impl/ and handlers/)
+├── infrastructure/      # Persistence — Mongoose repository implementations & schemas
+├── presentation/        # HTTP — REST controllers
+├── dto/                 # Request validation
+├── services/            # Application services (used where CQRS is not applied)
+└── strategies/          # Passport strategies (auth module only)
 ```
 
 ---
@@ -37,106 +118,65 @@ Frontend (Next.js / React Native)
 - Quiz and assessment system with score tracking
 - Tutor profile management and session booking
 - Performance analytics and report generation
-- Secure integration with the `ng-payment` microservice for handling transactions
+- Orchestration layer for `ng-payment` and `ng-ai` microservices
 
 ---
 
-## Technology Stack
+## Microservice Integration
 
-| Category            | Technology                                |
-| ------------------- | ----------------------------------------- |
-| Framework           | NestJS                                    |
-| Language            | TypeScript                                |
-| Database            | MongoDB                                   |
-| Storage             | AWS S3                                    |
-| Authentication      | JWT / Clerk / Auth.js                     |
-| Communication       | REST (optionally gRPC / RabbitMQ)         |
-| Reporting           | PDFKit, Recharts                          |
-| Payment Integration | ng-payment (Stripe / Billplz / SenangPay) |
+| Service      | Communication | Purpose                                        |
+| ------------ | ------------- | ---------------------------------------------- |
+| `ng-payment` | REST          | Payment sessions, transaction status, refunds  |
+| `ng-ai`      | REST          | AI recommendations, content analysis, tutoring |
 
----
-
-## Project Structure
-
-```
-
-ng-backend/
-├── src/
-│ ├── modules/
-│ │ ├── auth/ # authentication & authorization
-│ │ ├── users/ # user management
-│ │ ├── materials/ # learning material uploads & access
-│ │ ├── tests/ # quiz and assessment logic
-│ │ ├── tutors/ # tutor profiles & scheduling
-│ │ ├── bookings/ # booking system
-│ │ ├── reports/ # analytics and report generation
-│ │ └── payments/ # integration with ng-payment
-│ ├── app.module.ts
-│ └── main.ts
-│
-├── tests/
-│ ├── e2e/ # end-to-end test cases
-│ └── unit/ # unit tests
-│
-├── .env.example
-├── package.json
-├── tsconfig.json
-└── README.md
-
-```
-
----
-
-## Integration with `ng-payment`
-
-`ng-backend` communicates with the `ng-payment` microservice to handle all payment-related operations, including:
-
-- Payment session creation and validation
-- Transaction status updates
-- Refunds and reconciliation
-
-**Communication Pattern:**
-Primarily via RESTful API (`/api/payments`), with optional support for asynchronous messaging (RabbitMQ or gRPC) in scalable environments.
+> Future support for asynchronous messaging (RabbitMQ / gRPC) in scalable environments.
 
 ---
 
 ## Getting Started
 
-### 1. Clone Repository
+### 1. Clone & Install
 
 ```bash
-git clone https://github.com/yourusername/ng-backend.git
-cd ng-backend
-```
-
-### 2. Install Dependencies
-
-```bash
+git clone <repository-url>
+cd ng-core
 npm install
 ```
 
-### 3. Configure Environment Variables
+### 2. Configure Environment
 
 ```bash
 cp .env.example .env
 ```
 
-### 4. Start Development Server
+### 3. Development
 
 ```bash
 npm run start:dev
 ```
 
-### 5. Build and Start Production Server
+### 4. Production
 
 ```bash
 npm run build
 npm run start:prod
 ```
 
-### Run Tests
+### 5. Testing
 
 ```bash
-npm run test        # Unit tests
-npm run test:e2e    # End-to-end tests
+npm run unit        # Unit tests
+npm run e2e         # E2E tests (mongodb-memory-server)
+npm run test        # All tests
+```
+
+### 6. Documentation
+
+```bash
+# Swagger API docs
+http://localhost:3000/internal-ng-core-api
+
+# Compodoc (project documentation)
+npm run docs        # serve at http://localhost:8080
+npm run docs:dev    # serve with live reload
 ```
