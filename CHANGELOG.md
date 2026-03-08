@@ -33,6 +33,33 @@ This project follows the [Conventional Commits](https://www.conventionalcommits.
 
 ---
 
+## [2.2.0] — Event-Driven Custom Exception Architecture
+
+### Added
+
+- **Event-Driven Architecture**:
+  - Integrated `@nestjs/event-emitter` to decouple error logging and heavy background tasks from the main HTTP request lifecycle.
+  - Implemented `ErrorEventListener` to process and log system errors asynchronously via Winston.
+
+- **Custom Exception Hierarchy**:
+  - Created an `AppException` base class to standardize all application errors.
+  - Implemented **Dynamic Class Tracing** in `AppException` to automatically capture and log the exact class (Entity, Handler, Service) that threw the error using `this.constructor.name`.
+  - Added specific domain exception classes for the Users module (e.g., `UserDuplicateEmailException`, `NameExceededException`, `NameLessException`, `EmailException`).
+
+- **Domain Error Codes**:
+  - Created strongly-typed enums for domain error codes to replace fragile string messages (e.g., `UsersCommandErrorCodes`, `UsersNameValueObjectErrorCodes`, `EmailValueObjectErrorCodes`).
+
+### Changed
+
+- Updated `GlobalExceptionFilter` to dispatch errors via `EventEmitter2` instead of directly invoking Winston Logger.
+- Modified domain entities (value objects) and CQRS handlers to throw standardized custom exceptions enriched with class context (`this`).
+
+### Fixed
+
+- Replaced Winston Logger injection in `GlobalExceptionFilter` (in `main.ts`) with `EventEmitter2`, correctly routing background logging events.
+
+---
+
 ## [2.1.0] — Custom Logging Architecture
 
 ### Added
