@@ -33,6 +33,25 @@ This project follows the [Conventional Commits](https://www.conventionalcommits.
 
 ---
 
+## [2.1.0] — Custom Logging Architecture
+
+### Added
+
+- **Winston Custom File Logging**:
+  - Automatically routes application events (`application-events.log`), HTTP traffic (`http-traffic.log`), and unhandled crashes (`system-exceptions.log`) to dedicated files.
+  - Implemented custom log formatting `[Timestamp] LEVEL [Context] Message` mapped to Malaysia Time (GMT+8).
+
+- **HTTP Logger Middleware**:
+  - Intercepts and captures `JSON` payloads of HTTP Requests and Responses.
+  - Dynamically changes `winston` log severity (`DEBUG` / `WARN` / `ERROR`) based on response `statusCode`.
+  - Appends dynamically parsed `package.json` application `"version"` and analytical `"processingTime"` metrics into the log payload.
+
+- **Global Exception Filter**:
+  - Captures unhandled backend crashes and HTTP errors globally.
+  - Automatically parses the stack trace and pipes context to `system-exceptions.log`.
+
+---
+
 ## [2.0.8] — Test Infrastructure Rebuild + Bug Fixes
 
 ### Added
