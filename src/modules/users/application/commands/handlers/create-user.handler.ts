@@ -6,6 +6,7 @@ import {
   USER_REPOSITORY,
 } from 'src/modules/users/domain/repositories';
 import { User } from 'src/modules/users/domain/entities';
+import { UserDuplicateEmailException } from 'src/modules/users/domain/exceptions';
 
 /**
  * Handler for CreateUserCommand
@@ -33,7 +34,7 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
     const existing = await this.userRepository.findByEmail(command.email);
 
     if (existing) {
-      throw new ConflictException('Email already registered');
+      throw new UserDuplicateEmailException('Email already registered', this);
     }
 
     // 2. Create domain entity

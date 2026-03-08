@@ -3,11 +3,9 @@ import { AppModule } from './app.module';
 import { VersioningType } from '@nestjs/common';
 import { ApiVersionEnum, SwaggerVersionEnum } from './common/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import {
-  WINSTON_MODULE_NEST_PROVIDER,
-  WINSTON_MODULE_PROVIDER,
-} from 'nest-winston';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { GlobalExceptionFilter } from './core/exceptions/global-exception.filter';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -17,9 +15,7 @@ async function bootstrap() {
   // Tell the entire Nest application to use Winston
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
 
-  app.useGlobalFilters(
-    new GlobalExceptionFilter(app.get(WINSTON_MODULE_PROVIDER)),
-  );
+  app.useGlobalFilters(new GlobalExceptionFilter(app.get(EventEmitter2)));
 
   app.enableVersioning({
     type: VersioningType.URI,

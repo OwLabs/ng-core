@@ -1,3 +1,5 @@
+import { EmailException } from '../exceptions';
+
 export class Email {
   private readonly value: string;
 
@@ -7,7 +9,7 @@ export class Email {
 
   static create(email: string): Email {
     if (!Email.isValid(email)) {
-      throw new Error(`Invalid email: ${email}`);
+      throw new EmailException(`Invalid email: ${email}`, this);
     }
 
     return new Email(email.toLowerCase().trim());
