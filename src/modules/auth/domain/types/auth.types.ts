@@ -1,6 +1,7 @@
 import { Type } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { UserResponse } from 'src/modules/users/domain/types';
+import { OtpStatus } from '../enums/otp-status.enum';
 
 /**
  * AuthResult — discriminated union for login validation
@@ -74,6 +75,47 @@ export interface RefreshTokenPersistenceProps {
   userAgent?: string | null;
   ip?: string | null;
   revoked?: boolean;
+  expiresAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface OtpTokenProps {
+  id: Types.ObjectId;
+  userId: Types.ObjectId;
+  email: string;
+  codeHash: string;
+  attempts: number;
+  maxAttempts: number;
+  resendCount: number;
+  maxResends: number;
+  status: string;
+  expiresAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateOtpTokenProps {
+  id: Types.ObjectId;
+  userId: Types.ObjectId | string;
+  email: string;
+  codeHash: string;
+  maxAttempts: number;
+  maxResends: number;
+  status: OtpStatus;
+  expiresAt: Date;
+}
+
+export interface OtpTokenPersistenceProps {
+  id: Types.ObjectId;
+  userId: Types.ObjectId;
+  email: string;
+  codeHash: string;
+  attempts: number;
+  maxAttempts: number;
+  resendCount: number;
+  maxResends: number;
+  status: string;
   expiresAt: Date;
   createdAt?: Date;
   updatedAt?: Date;
