@@ -28,9 +28,9 @@ export class HttpLoggerMiddleware implements NestMiddleware {
     const originalSend = response.send;
     let responseBody: any;
 
-    response.send = function (body) {
-      responseBody = body;
-      return originalSend.apply(response, arguments as any);
+    response.send = function (...args: any[]) {
+      responseBody = args[0];
+      return originalSend.apply(response, args as any);
     };
 
     // Hook into the response finish event to get the status code
