@@ -33,6 +33,26 @@ This project follows the [Conventional Commits](https://www.conventionalcommits.
 
 ---
 
+## [2.3.0] — API Health Check & Standardized Timestamps
+
+### Added
+
+- **Health Check Endpoint**:
+  - Added `GET /v1/health` endpoint via `AppController` and `AppService`.
+  - Returns structured application status, current environment (`NODE_ENV`), uptime, and Malaysia timestamp.
+
+- **Date Utilities**:
+  - Extracted `getMalaysiaTimestamp` (GMT+8) logic into a globally reusable utility (`src/common/utils/date.ts`).
+
+### Changed
+
+- **Global Exception Filter**:
+  - Updated standard JSON error response payloads to use the `getMalaysiaTimestamp()` format instead of raw UTC ISO strings.
+- **Winston Config**:
+  - Refactored logger to consume the shared `getMalaysiaTimestamp` utility.
+
+---
+
 ## [2.2.0] — Event-Driven Custom Exception Architecture
 
 ### Added
