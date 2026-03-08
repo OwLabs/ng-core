@@ -16,11 +16,15 @@ export class AppException extends Error {
     this.code = code;
     this.statusCode = statusCode;
 
-    if (typeof context === 'object' && context !== null) {
+    if (typeof context === 'string') {
+      this.module = context;
+    } else if (typeof context === 'function' && context.name) {
+      // When `this` is passed from a static method, `context` is the constructor function itself
+      this.module = context.name;
+    } else if (typeof context === 'object' && context !== null) {
       this.module = context.constructor.name;
     } else {
-      // Fallback in case they passed a string (e.g., Global functions without a class)
-      this.module = context as string;
+      this.module = 'Unknown';
     }
 
     Error.captureStackTrace(this, this.constructor);

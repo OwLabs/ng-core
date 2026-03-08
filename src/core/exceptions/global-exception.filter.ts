@@ -8,6 +8,7 @@ import {
 import { AppException } from './app.exception';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ErrorEventPayload } from './types';
+import { getMalaysiaTimestamp } from 'src/common/utils';
 
 @Catch() // Catch everything
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -45,7 +46,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       path: request.url,
       method: request.method,
       body: request.body,
-      timestamp: new Date().toISOString(),
+      timestamp: getMalaysiaTimestamp(),
     };
 
     this.eventEmitter.emit('system.error.occured', errorPayload);
@@ -55,7 +56,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       success: false,
       errorCode: code,
       message: message,
-      timeStamp: errorPayload.timestamp,
+      timestamp: errorPayload.timestamp,
     });
   }
 }
