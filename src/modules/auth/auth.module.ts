@@ -11,13 +11,17 @@ import {
   GoogleAuthController,
 } from './presentation/controllers';
 import { AuthService, RefreshTokenService } from './services';
-import { REFRESH_TOKEN_REPOSITORY } from './domain/repositories';
+import {
+  OTP_TOKEN_REPOSITORY,
+  REFRESH_TOKEN_REPOSITORY,
+} from './domain/repositories';
 import { RefreshTokenRepositoryImpl } from './infrastructure/repositories';
 import { GoogleStrategy, JwtStrategy, LocalStrategy } from './strategies';
 import { EMAIL_SERVICE } from './domain/email-service.interface';
 import { ConsoleEmailService } from './infrastructure/console-email/console-email.service';
 import { NodemailerEmailService } from './infrastructure/nodemailer-email/nodemailer-email.service';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { OtpTokenRepositoryImpl } from './infrastructure/repositories/otp-token-repository';
 
 /**
  * AuthModule — rewired
@@ -57,7 +61,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
       inject: [ConfigService],
     }),
 
-    MailerModule.forRootAsync({ 
+    MailerModule.forRootAsync({
       useFactory: async (config: ConfigService) => ({
         transport: {
           host: config.get('SMTP_HOST', 'smtp.ethereal.email'),
@@ -97,7 +101,11 @@ import { MailerModule } from '@nestjs-modules/mailer';
         process.env.NODE_ENV === 'production'
           ? NodemailerEmailService
           : ConsoleEmailService,
-    }
+    },
+    {
+      provide: OTP_TOKEN_REPOSITORY,
+      useClass: OtpTokenRepositoryImpl,
+    },
   ],
 
   exports: [AuthService, RefreshTokenService],

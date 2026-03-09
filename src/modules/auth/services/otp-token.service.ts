@@ -1,12 +1,6 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import {
-  IOTPTokenRepository,
-  OTP_TOKEN_REPOSITORY,
-} from '../domain/repositories';
-import {
-  EMAIL_SERVICE,
-  IEmailService,
-} from '../domain/email-service.interface';
+import { IOTPTokenRepository } from '../domain/repositories';
+import { IEmailService } from '../domain/email-service.interface';
 import { randomInt } from 'crypto';
 import { Types } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
@@ -15,13 +9,13 @@ import { OtpStatus } from '../domain/enums/otp-status.enum';
 @Injectable()
 export class OtpTokenService {
   constructor(
-    @Inject(OTP_TOKEN_REPOSITORY)
+    @Inject('OTP_TOKEN_REPOSITORY')
     private readonly OtpTokenRepo: IOTPTokenRepository,
-    @Inject(EMAIL_SERVICE) private readonly emailService: IEmailService,
+    @Inject('EMAIL_SERVICE') private readonly emailService: IEmailService,
   ) {}
 
   async generateAndSendOtp(
-    userId: Types.ObjectId | string,
+    userId: Types.ObjectId,
     email: string,
   ): Promise<string> {
     const code = randomInt(100000, 1000000);
