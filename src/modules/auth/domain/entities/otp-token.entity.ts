@@ -21,7 +21,7 @@ export class OtpToken {
   private _updatedAt: Date;
 
   private constructor(props: OtpTokenProps) {
-    this._id = props.id;
+    this._id = props.id ?? new Types.ObjectId();
     this._userId = props.userId;
     this._codeHash = props.codeHash;
     this._attempts = props.attempts;
