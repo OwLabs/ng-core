@@ -16,13 +16,14 @@ export class OtpToken {
   private _resendCount: number;
   private readonly _maxResends: number;
   private _status: OtpStatus;
-  private readonly _expiresAt: Date;
+  private _expiresAt: Date;
   private readonly _createdAt: Date;
   private _updatedAt: Date;
 
   private constructor(props: OtpTokenProps) {
     this._id = props.id ?? new Types.ObjectId();
     this._userId = props.userId;
+    this._email = props.email;
     this._codeHash = props.codeHash;
     this._attempts = props.attempts;
     this._maxAttempts = props.maxAttempts;
@@ -149,7 +150,11 @@ export class OtpToken {
 
   updateCodeHash(newHash: string): void {
     this._codeHash = newHash;
-    this._resendCount = 0;
+    this._attempts = 0;
+  }
+
+  updateExpiry(newExpiry: Date): void {
+    this._expiresAt = newExpiry;
   }
 
   toPersistence(): OtpTokenPersistenceProps {

@@ -76,7 +76,7 @@ export class AuthController {
     if (!result.success && result.unverified) {
       const otpTokenId = await this.otpTokenService.generateAndSendOtp(
         result.userId,
-        result.email,
+        dto.email,
       );
       throw new HttpException(
         { message: result.message, otpTokenId },
