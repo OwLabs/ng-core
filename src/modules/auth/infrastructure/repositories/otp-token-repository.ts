@@ -33,19 +33,6 @@ export class OtpTokenRepositoryImpl implements IOTPTokenRepository {
     return data ? this.toDomain(data) : null;
   }
 
-  async updateCodeHash(
-    id: string,
-    newHash: string,
-    newExpiry: Date,
-  ): Promise<void> {
-    await this.otpTokenModel
-      .findByIdAndUpdate(id, {
-        codeHash: newHash,
-        expiresAt: newExpiry,
-      })
-      .exec();
-  }
-
   async revokeById(id: string): Promise<void> {
     await this.otpTokenModel
       .findByIdAndUpdate(id, {
@@ -68,15 +55,15 @@ export class OtpTokenRepositoryImpl implements IOTPTokenRepository {
   private toDomain(doc: any): OtpToken {
     return OtpToken.fromPersistence({
       id: doc._id,
-      userId: doc._userId,
-      email: doc._email,
-      codeHash: doc._codeHash,
-      attempts: doc._attempts,
-      maxAttempts: doc._maxAttempts,
-      resendCount: doc._resendCount,
-      maxResends: doc._maxResends,
-      status: doc._status,
-      expiresAt: doc._expiresAt,
+      userId: doc.userId,
+      email: doc.email,
+      codeHash: doc.codeHash,
+      attempts: doc.attempts,
+      maxAttempts: doc.maxAttempts,
+      resendCount: doc.resendCount,
+      maxResends: doc.maxResends,
+      status: doc.status,
+      expiresAt: doc.expiresAt,
     });
   }
 }

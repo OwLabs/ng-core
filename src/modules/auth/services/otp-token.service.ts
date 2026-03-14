@@ -27,16 +27,13 @@ export class OtpTokenService {
     const code = randomInt(100000, 1000000);
     const hashedCode = await bcrypt.hash(code.toString(), 10);
     const tokenId = new Types.ObjectId();
-    const expiryDate = new Date(Date.now() + 60000 * 10);
+    const expiryDate = new Date(Date.now() + 5 * 60 * 1000);
 
     const otpToken = OtpToken.create({
       id: tokenId,
-      userId: userId.toString(),
+      userId,
       email,
       codeHash: hashedCode,
-      maxAttempts: 5,
-      maxResends: 3,
-      status: OtpStatus.PENDING,
       expiresAt: expiryDate,
     });
     await this.otpTokenRepo.save(otpToken);
@@ -59,6 +56,8 @@ export class OtpTokenService {
     }
 
     if (otpToken.isMaxAttemptsReached()) {
+      otpToken.revoke();
+      await this.otpTokenRepo.update(tokenId.toString(), otpToken);
       throw new UnauthorizedException('Maximum OTP attempts reached');
     }
 
@@ -69,6 +68,9 @@ export class OtpTokenService {
       await this.otpTokenRepo.update(otpToken.id.toString(), otpToken);
       throw new UnauthorizedException('Invalid OTP code');
     }
+
+    otpToken.markAsVerified();
+    await this.otpTokenRepo.update(otpToken.id.toString(), otpToken);
 
     return { userId: otpToken.userId.toString() };
   }
@@ -90,13 +92,13 @@ export class OtpTokenService {
 
     const newCode = randomInt(100000, 1000000);
     const newHashedCode = await bcrypt.hash(newCode.toString(), 10);
-    const newExpiry = new Date(Date.now() + 60000 * 10);
+    const newExpiry = new Date(Date.now() + 5 * 60 * 1000);
 
-    await this.otpTokenRepo.updateCodeHash(
-      otpTokenId.toString(),
-      newHashedCode,
-      newExpiry,
-    );
+    otpToken.updateCodeHash(newHashedCode);
+    otpToken.incrementResends();
+    otpToken.updateExpiry(newExpiry);
+
+    await this.otpTokenRepo.update(otpToken.id.toString(), otpToken);
 
     await this.emailService.sendOtpEmail(otpToken.email, newCode.toString());
   }

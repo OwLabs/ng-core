@@ -107,9 +107,9 @@ export interface CreateOtpTokenProps {
   userId: Types.ObjectId | string;
   email: string;
   codeHash: string;
-  maxAttempts: number;
-  maxResends: number;
-  status: OtpStatus;
+  maxAttempts?: number;
+  maxResends?: number;
+  status?: OtpStatus;
   expiresAt: Date;
 }
 
