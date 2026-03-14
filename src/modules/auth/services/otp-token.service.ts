@@ -1,6 +1,12 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { IOTPTokenRepository } from '../domain/repositories';
-import { IEmailService } from '../domain/email-service.interface';
+import {
+  IOTPTokenRepository,
+  OTP_TOKEN_REPOSITORY,
+} from '../domain/repositories';
+import {
+  EMAIL_SERVICE,
+  IEmailService,
+} from '../domain/repositories/email-service.interface';
 import { randomInt } from 'crypto';
 import { Types } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
@@ -9,9 +15,9 @@ import { OtpStatus } from '../domain/enums/otp-status.enum';
 @Injectable()
 export class OtpTokenService {
   constructor(
-    @Inject('OTP_TOKEN_REPOSITORY')
-    private readonly OtpTokenRepo: IOTPTokenRepository,
-    @Inject('EMAIL_SERVICE') private readonly emailService: IEmailService,
+    @Inject(OTP_TOKEN_REPOSITORY)
+    private readonly otpTokenRepo: IOTPTokenRepository,
+    @Inject(EMAIL_SERVICE) private readonly emailService: IEmailService,
   ) {}
 
   async generateAndSendOtp(
@@ -33,7 +39,7 @@ export class OtpTokenService {
       status: OtpStatus.PENDING,
       expiresAt: expiryDate,
     });
-    await this.OtpTokenRepo.save(otpToken);
+    await this.otpTokenRepo.save(otpToken);
 
     await this.emailService.sendOtpEmail(email, code.toString());
     return tokenId.toString();
@@ -43,7 +49,7 @@ export class OtpTokenService {
     tokenId: Types.ObjectId | string,
     code: string,
   ): Promise<{ userId: string }> {
-    const otpToken = await this.OtpTokenRepo.findById(tokenId.toString());
+    const otpToken = await this.otpTokenRepo.findById(tokenId.toString());
     if (!otpToken) {
       throw new UnauthorizedException('Invalid OTP token');
     }
@@ -60,7 +66,7 @@ export class OtpTokenService {
 
     if (!isMatch) {
       otpToken.incrementAttempts();
-      await this.OtpTokenRepo.update(otpToken.id.toString(), otpToken);
+      await this.otpTokenRepo.update(otpToken.id.toString(), otpToken);
       throw new UnauthorizedException('Invalid OTP code');
     }
 
@@ -68,7 +74,7 @@ export class OtpTokenService {
   }
 
   async resendOtp(otpTokenId: Types.ObjectId | string): Promise<void> {
-    const otpToken = await this.OtpTokenRepo.findById(otpTokenId.toString());
+    const otpToken = await this.otpTokenRepo.findById(otpTokenId.toString());
 
     if (!otpToken) {
       throw new UnauthorizedException('Invalid OTP session');
@@ -86,7 +92,7 @@ export class OtpTokenService {
     const newHashedCode = await bcrypt.hash(newCode.toString(), 10);
     const newExpiry = new Date(Date.now() + 60000 * 10);
 
-    await this.OtpTokenRepo.updateCodeHash(
+    await this.otpTokenRepo.updateCodeHash(
       otpTokenId.toString(),
       newHashedCode,
       newExpiry,

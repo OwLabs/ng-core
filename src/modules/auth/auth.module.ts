@@ -21,9 +21,9 @@ import {
 } from './domain/repositories';
 import { RefreshTokenRepositoryImpl } from './infrastructure/repositories';
 import { GoogleStrategy, JwtStrategy, LocalStrategy } from './strategies';
-import { EMAIL_SERVICE } from './domain/email-service.interface';
-import { ConsoleEmailService } from './infrastructure/console-email/console-email.service';
-import { NodemailerEmailService } from './infrastructure/nodemailer-email/nodemailer-email.service';
+import { EMAIL_SERVICE } from './domain/repositories/email-service.interface';
+import { ConsoleEmailService } from './infrastructure/console-email.service';
+import { NodemailerEmailService } from './infrastructure/nodemailer-email.service';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { OtpTokenRepositoryImpl } from './infrastructure/repositories/otp-token-repository';
 import { OtpToken } from './domain/entities';
