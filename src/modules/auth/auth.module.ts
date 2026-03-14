@@ -3,14 +3,18 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { PassportModule } from '@nestjs/passport';
 import { UsersModule } from '../users/users.module';
 import { MongooseModule } from '@nestjs/mongoose';
-import { RefreshToken, RefreshTokenSchema } from './infrastructure/schemas';
+import {
+  OtpTokenSchema,
+  RefreshToken,
+  RefreshTokenSchema,
+} from './infrastructure/schemas';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import {
   AuthController,
   GoogleAuthController,
 } from './presentation/controllers';
-import { AuthService, RefreshTokenService } from './services';
+import { AuthService, OtpTokenService, RefreshTokenService } from './services';
 import {
   OTP_TOKEN_REPOSITORY,
   REFRESH_TOKEN_REPOSITORY,
@@ -22,6 +26,7 @@ import { ConsoleEmailService } from './infrastructure/console-email/console-emai
 import { NodemailerEmailService } from './infrastructure/nodemailer-email/nodemailer-email.service';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { OtpTokenRepositoryImpl } from './infrastructure/repositories/otp-token-repository';
+import { OtpToken } from './domain/entities';
 
 /**
  * AuthModule — rewired
@@ -41,10 +46,12 @@ import { OtpTokenRepositoryImpl } from './infrastructure/repositories/otp-token-
     CqrsModule,
     PassportModule,
     UsersModule,
+    MailerModule,
 
     // Register RefreshToken schema locally (auth owns it)
     MongooseModule.forFeature([
       { name: RefreshToken.name, schema: RefreshTokenSchema },
+      { name: OtpToken.name, schema: OtpTokenSchema },
     ]),
 
     // JWT Configuration
@@ -84,6 +91,7 @@ import { OtpTokenRepositoryImpl } from './infrastructure/repositories/otp-token-
     // Services (auth uses services, not CQRS handlers)
     AuthService,
     RefreshTokenService,
+    OtpTokenService,
 
     // Repository - interface token → implementation
     {

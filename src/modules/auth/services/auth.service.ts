@@ -11,6 +11,7 @@ import { CreateUserCommand } from 'src/modules/users/application/commands/impl';
 import { AuthProvider } from 'src/modules/users/domain/enums';
 import { AuthResult, AuthTokens, TokenPayload } from '../domain/types';
 import { GetUserByEmailQuery } from 'src/modules/users/application/queries/impl';
+import { OtpTokenService } from './otp-token.service';
 /**
  * AuthService — refactored
  *
@@ -38,6 +39,7 @@ export class AuthService {
     private readonly queryBus: QueryBus,
     private readonly configService: ConfigService,
     private readonly refreshTokenService: RefreshTokenService,
+    private readonly otpTokenService: OtpTokenService,
   ) {
     // Configurable salt rounds (default 10 if not set)
     this.saltRounds = this.configService.get<number>('BCRYPT_SALT_ROUNDS', 10);
@@ -57,14 +59,21 @@ export class AuthService {
    *   the check and then both try to create. Let the handler handle it
    *   (it has the repository-level lock)
    */
-  async register(dto: RegisterDto): Promise<UserResponse> {
+  async register(
+    dto: RegisterDto,
+  ): Promise<{ user: UserResponse; otpTokenId: string }> {
     const hashed = await bcrypt.hash(dto.password, this.saltRounds);
 
     const user: User = await this.commandBus.execute(
       new CreateUserCommand(dto.email, dto.name, AuthProvider.LOCAL, hashed),
     );
 
-    return user.toResponse();
+    const otpTokenId = await this.otpTokenService.generateAndSendOtp(
+      user.id,
+      dto.email,
+    );
+
+    return { user: user.toResponse(), otpTokenId };
   }
 
   /**
@@ -98,6 +107,16 @@ export class AuthService {
       return {
         success: false,
         message: 'Incorrect password',
+      };
+    }
+
+    if (!user.verify()) {
+      return {
+        success: false,
+        unverified: true,
+        userId: user.id.toString(),
+        email: user.email.getValue(),
+        message: 'Email not verified. Please check your inbox.',
       };
     }
 

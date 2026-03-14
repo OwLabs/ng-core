@@ -1,6 +1,6 @@
 import { IsMongoId, IsString, Length } from 'class-validator';
 
-export class verifyOtpDto {
+export class VerifyOtpDto {
   @IsMongoId()
   otpTokenId: string;
 

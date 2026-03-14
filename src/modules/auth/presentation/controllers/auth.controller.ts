@@ -1,6 +1,8 @@
 import {
   Body,
   Controller,
+  HttpException,
+  HttpStatus,
   Post,
   Request,
   UnauthorizedException,
@@ -8,13 +10,26 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiVersionEnum } from 'src/common/config';
-import { AuthService, RefreshTokenService } from '../../services';
-import { LogoutDto, RefreshTokenDto, RegisterDto } from '../../dto';
+import {
+  AuthService,
+  OtpTokenService,
+  RefreshTokenService,
+} from '../../services';
+import {
+  LoginDto,
+  LogoutDto,
+  RefreshTokenDto,
+  RegisterDto,
+  ResendOtpDto,
+  VerifyOtpDto,
+} from '../../dto';
 import { UserResponse } from 'src/modules/users/domain/types';
 import { AuthGuard } from '@nestjs/passport';
 import { Request as ExpressRequest } from 'express';
 import { AuthTokens } from '../../domain/types';
 import { extractClientIp } from '../utils';
+import { VerifyUserCommand } from 'src/modules/users/application/commands/impl';
+import { CommandBus } from '@nestjs/cqrs';
 
 /**
  * AuthController — fixed
@@ -34,23 +49,73 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly refreshTokenService: RefreshTokenService,
+    private readonly otpTokenService: OtpTokenService,
+    private readonly commandBus: CommandBus,
   ) {}
 
   @Post('register')
-  async register(@Body() dto: RegisterDto): Promise<UserResponse> {
-    return this.authService.register(dto);
+  async register(@Body() dto: RegisterDto) {
+    const result = await this.authService.register(dto);
+    return {
+      message: 'Registration successful. Please verify your email.',
+      otpTokenId: result.otpTokenId,
+      user: result.user,
+    };
   }
 
   @UseGuards(AuthGuard('local'))
   @Post('login')
-  async login(@Request() req: ExpressRequest): Promise<AuthTokens> {
+  async login(
+    @Request() dto: LoginDto,
+    req: ExpressRequest,
+  ): Promise<AuthTokens> {
     // req.user is set by LocalStrategy.validate()
     // which returns UserResponse
-    return this.authService.login(req.user as UserResponse, {
+    const result = await this.authService.validateUser(dto.email, dto.password);
+
+    if (!result.success && result.unverified) {
+      const otpTokenId = await this.otpTokenService.generateAndSendOtp(
+        result.userId,
+        result.email,
+      );
+      throw new HttpException(
+        { message: result.message, otpTokenId },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    if (!result.success) {
+      throw new UnauthorizedException(result.message);
+    }
+
+    const user = req.user as UserResponse;
+    // LocalStrategy already validated password.
+    // But if user is unverified, req.user won't be set
+    // because LocalStrategy throws. So we need to handle
+    // the unverified case differently — see Step 8D below.
+
+    return this.authService.login(user, {
       userAgent: req.headers['user-agent'],
       ip: extractClientIp(req),
       tokenTtlDays: 30,
     });
+  }
+
+  @Post('verify-otp')
+  async verifyOtp(@Body() dto: VerifyOtpDto) {
+    const result = await this.otpTokenService.verifyOtp(
+      dto.otpTokenId,
+      dto.code,
+    );
+
+    await this.commandBus.execute(new VerifyUserCommand(result.userId));
+
+    return { message: 'Email verified successfully' };
+  }
+
+  @Post('resend-otp')
+  async resendOtp(@Body() dto: ResendOtpDto) {
+    await this.otpTokenService.resendOtp(dto.otpTokenId);
+    return { message: 'OTP resent successfully' };
   }
 
   @Post('refresh')
