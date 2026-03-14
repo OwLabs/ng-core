@@ -19,7 +19,14 @@ import { OtpStatus } from '../enums/otp-status.enum';
  */
 export type AuthResult =
   | { success: true; user: UserResponse }
-  | { success: false; message: string };
+  | { success: false; message: string; unverified?: undefined }
+  | {
+      success: false;
+      message: string;
+      unverified: true;
+      userId: string;
+      email: string;
+    };
 
 /**
  * TokenPayload - what gets signed into the JWT

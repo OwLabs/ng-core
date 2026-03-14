@@ -15,7 +15,7 @@ export class OtpTokenService {
   ) {}
 
   async generateAndSendOtp(
-    userId: Types.ObjectId,
+    userId: Types.ObjectId | string,
     email: string,
   ): Promise<string> {
     const code = randomInt(100000, 1000000);

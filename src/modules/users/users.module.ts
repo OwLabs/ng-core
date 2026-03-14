@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import {
   CreateUserHandler,
   UpdateUserRolesHandler,
+  VerifyUserHandler,
 } from './application/commands/handlers';
 import {
   GetAllUsersHandler,
@@ -17,7 +18,11 @@ import { USER_REPOSITORY } from './domain/repositories';
 import { UserRepositoryImpl } from './infrastructure/repositories';
 import { User, UserSchema } from './infrastructure/schemas';
 
-const CommandHandlers = [CreateUserHandler, UpdateUserRolesHandler];
+const CommandHandlers = [
+  CreateUserHandler,
+  UpdateUserRolesHandler,
+  VerifyUserHandler,
+];
 
 const QueryHandlers = [
   GetAllUsersHandler,
