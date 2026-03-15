@@ -57,7 +57,7 @@ export class OtpTokenService {
 
     if (otpToken.isMaxAttemptsReached()) {
       otpToken.revoke();
-      await this.otpTokenRepo.update(tokenId.toString(), otpToken);
+      await this.otpTokenRepo.update(otpToken);
       throw new UnauthorizedException('Maximum OTP attempts reached');
     }
 
@@ -65,12 +65,12 @@ export class OtpTokenService {
 
     if (!isMatch) {
       otpToken.incrementAttempts();
-      await this.otpTokenRepo.update(otpToken.id.toString(), otpToken);
+      await this.otpTokenRepo.update(otpToken);
       throw new UnauthorizedException('Invalid OTP code');
     }
 
     otpToken.markAsVerified();
-    await this.otpTokenRepo.update(otpToken.id.toString(), otpToken);
+    await this.otpTokenRepo.update(otpToken);
 
     return { userId: otpToken.userId.toString() };
   }
@@ -98,7 +98,7 @@ export class OtpTokenService {
     otpToken.incrementResends();
     otpToken.updateExpiry(newExpiry);
 
-    await this.otpTokenRepo.update(otpToken.id.toString(), otpToken);
+    await this.otpTokenRepo.update(otpToken);
 
     await this.emailService.sendOtpEmail(otpToken.email, newCode.toString());
   }
