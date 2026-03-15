@@ -71,21 +71,6 @@ export class AuthController {
   ): Promise<AuthTokens> {
     // req.user is set by LocalStrategy.validate()
     // which returns UserResponse
-    const result = await this.authService.validateUser(dto.email, dto.password);
-
-    if (!result.success && result.unverified) {
-      const otpTokenId = await this.otpTokenService.generateAndSendOtp(
-        result.userId,
-        dto.email,
-      );
-      throw new HttpException(
-        { message: result.message, otpTokenId },
-        HttpStatus.FORBIDDEN,
-      );
-    }
-    if (!result.success) {
-      throw new UnauthorizedException(result.message);
-    }
 
     const user = req.user as UserResponse;
     // LocalStrategy already validated password.
