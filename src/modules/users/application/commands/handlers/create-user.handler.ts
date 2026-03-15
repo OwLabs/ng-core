@@ -34,14 +34,8 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
     // 1. Check if email already exists (application-level check)
     const existing = await this.userRepository.findByEmail(command.email);
 
-    let x: boolean = false;
-
     if (existing) {
       throw new UserDuplicateEmailException('Email already registered', this);
-    }
-
-    if (existing && (existing as User)?.provider !== AuthProvider.LOCAL) {
-      x = true;
     }
 
     // 2. Create domain entity
@@ -54,7 +48,6 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
       provider: command.provider,
       providerId: command.providerId ?? null,
       avatar: command.avatar ?? null,
-      isVerified: x ? true : false,
     });
 
     // 3. Persist via repository
