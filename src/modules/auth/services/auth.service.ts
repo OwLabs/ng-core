@@ -68,15 +68,10 @@ export class AuthService {
       new CreateUserCommand(dto.email, dto.name, AuthProvider.LOCAL, hashed),
     );
 
-    let otpTokenId: any = '';
-    try {
-      otpTokenId = await this.otpTokenService.generateAndSendOtp(
-        user.id,
-        dto.email,
-      );
-    } catch (error) {
-      console.log(error);
-    }
+    const otpTokenId = await this.otpTokenService.generateAndSendOtp(
+      user.id,
+      dto.email,
+    );
 
     return { user: user.toResponse(), otpTokenId };
   }

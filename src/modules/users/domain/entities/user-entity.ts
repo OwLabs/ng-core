@@ -104,7 +104,7 @@ export class User {
       password: props.password ?? null,
       provider: props.provider,
       providerId: props.providerId ?? null,
-      isVerified: props.isVerified ?? false,
+      isVerified: false,
       avatar: props.avatar ?? null,
       roles: [UserRole.LIMITED_ACCESS_USER],
     });
@@ -179,6 +179,10 @@ export class User {
     return this._updatedAt;
   }
 
+  get isVerified(): boolean {
+    return this._isVerified;
+  }
+
   // ===== BUSINESS METHODS =====
   //
   // These are WHERE DOMAIN LOGIC LIVES
@@ -240,6 +244,7 @@ export class User {
   }
 
   verify(): boolean {
+    this.touch();
     return (this._isVerified = true);
   }
 

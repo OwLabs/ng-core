@@ -1,4 +1,10 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import {
   IOTPTokenRepository,
   OTP_TOKEN_REPOSITORY,
@@ -42,10 +48,7 @@ export class OtpTokenService {
     return tokenId.toString();
   }
 
-  async verifyOtp(
-    tokenId: Types.ObjectId | string,
-    code: string,
-  ): Promise<{ userId: string }> {
+  async verifyOtp(tokenId: string, code: string): Promise<{ userId: string }> {
     const otpToken = await this.otpTokenRepo.findById(tokenId.toString());
     if (!otpToken) {
       throw new UnauthorizedException('Invalid OTP token');
@@ -75,8 +78,8 @@ export class OtpTokenService {
     return { userId: otpToken.userId.toString() };
   }
 
-  async resendOtp(otpTokenId: Types.ObjectId | string): Promise<void> {
-    const otpToken = await this.otpTokenRepo.findById(otpTokenId.toString());
+  async resendOtp(otpTokenId: string): Promise<void> {
+    const otpToken = await this.otpTokenRepo.findById(otpTokenId);
 
     if (!otpToken) {
       throw new UnauthorizedException('Invalid OTP session');
@@ -86,8 +89,8 @@ export class OtpTokenService {
       throw new UnauthorizedException('Maximum OTP resends reached');
     }
 
-    if (otpToken.status == OtpStatus.VERIFIED) {
-      throw new UnauthorizedException('OTP already verified');
+    if (otpToken.isVerified()) {
+      throw new HttpException('OTP already verified', HttpStatus.BAD_REQUEST);
     }
 
     const newCode = randomInt(100000, 1000000);

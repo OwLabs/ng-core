@@ -19,7 +19,6 @@ export class CreateUserCommand {
     public readonly provider: AuthProvider,
     public readonly password?: string | null,
     public readonly providerId?: string | null,
-    public readonly isVerified?: boolean,
     public readonly avatar?: string | null,
   ) {}
 }
