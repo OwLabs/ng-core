@@ -45,10 +45,10 @@ export class OtpToken {
       email: props.email,
       codeHash: props.codeHash,
       attempts: 0,
-      maxAttempts: props.maxAttempts ?? 5,
+      maxAttempts: 5,
       resendCount: 0,
       maxResends: props.maxResends ?? 3,
-      status: props.status ?? OtpStatus.PENDING,
+      status: OtpStatus.PENDING,
       expiresAt: props.expiresAt,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -65,7 +65,7 @@ export class OtpToken {
       maxAttempts: props.maxAttempts,
       resendCount: props.resendCount,
       maxResends: props.maxResends,
-      status: props.status,
+      status: props.status ?? OtpStatus.PENDING,
       expiresAt: props.expiresAt,
       createdAt: props.createdAt ?? new Date(),
       updatedAt: props.updatedAt ?? new Date(),
@@ -105,7 +105,7 @@ export class OtpToken {
   }
 
   get status(): OtpStatus {
-    return this._status as OtpStatus;
+    return this._status;
   }
 
   get expiresAt(): Date {
@@ -122,6 +122,10 @@ export class OtpToken {
 
   isExpired(): boolean {
     return this._expiresAt < new Date();
+  }
+
+  isVerified(): boolean {
+    return this._status === OtpStatus.VERIFIED;
   }
 
   isMaxAttemptsReached(): boolean {
