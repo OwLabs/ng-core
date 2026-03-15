@@ -25,14 +25,6 @@ export class OtpTokenRepositoryImpl implements IOTPTokenRepository {
     return data ? this.toDomain(data) : null;
   }
 
-  async markAsUsed(id: string): Promise<OtpToken | null> {
-    const data = await this.otpTokenModel.findByIdAndUpdate(id, {
-      status: OtpStatus.EXPIRED,
-    });
-
-    return data ? this.toDomain(data) : null;
-  }
-
   async revokeById(id: string): Promise<void> {
     await this.otpTokenModel
       .findByIdAndUpdate(id, {
@@ -41,9 +33,10 @@ export class OtpTokenRepositoryImpl implements IOTPTokenRepository {
       .exec();
   }
 
-  async update(id: string, token: OtpToken): Promise<OtpToken> {
+  async update(token: OtpToken): Promise<OtpToken> {
+    const data = token.toPersistence();
     const updated = await this.otpTokenModel
-      .findByIdAndUpdate(id, token.toPersistence())
+      .findByIdAndUpdate(data.id, data, { new: true })
       .exec();
 
     if (!updated) {
