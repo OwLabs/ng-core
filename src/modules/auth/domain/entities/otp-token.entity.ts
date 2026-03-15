@@ -47,7 +47,7 @@ export class OtpToken {
       attempts: 0,
       maxAttempts: 5,
       resendCount: 0,
-      maxResends: props.maxResends ?? 3,
+      maxResends: 3,
       status: OtpStatus.PENDING,
       expiresAt: props.expiresAt,
       createdAt: new Date(),
