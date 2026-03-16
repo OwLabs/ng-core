@@ -33,6 +33,29 @@ This project follows the [Conventional Commits](https://www.conventionalcommits.
 
 ---
 
+## [2.3.1] — Authentication Flow Refinement & Schema Standardization
+
+### Added
+
+- **Auto-Verification Support**:
+  - Added `isVerified` flag to `CreateUserCommand` and `User.create` factory.
+  - Allows users to be created in a pre-verified state (e.g., for trusted OAuth providers).
+
+### Changed
+
+- **OtpToken Schema Standardization**:
+  - Refactored `OtpToken` schema to use the domain `OtpStatus` enum instead of ad-hoc string arrays.
+  - Aligned infrastructure-level `blocked` status with domain-level `revoked` to ensure consistency.
+- **Improved Unverified Login Handling**:
+  - Refactored `LocalStrategy` to return correctly authenticated but unverified users to the controller.
+  - Updated `AuthController.login` to catch unverified states and return a `403 Forbidden` with a fresh `otpTokenId`.
+- **Google OAuth Auto-Verification**:
+  - Updated Google login flow to automatically mark new users as verified upon creation.
+- **Internal API consistency**:
+  - Updated `OtpTokenService.generateAndSendOtp` to return a structured object `{ otpTokenId: string }`.
+
+---
+
 ## [2.3.0] — API Health Check & Standardized Timestamps
 
 ### Added

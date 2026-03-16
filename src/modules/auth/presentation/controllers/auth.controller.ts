@@ -1,8 +1,7 @@
 import {
   Body,
   Controller,
-  HttpException,
-  HttpStatus,
+  ForbiddenException,
   Post,
   Request,
   UnauthorizedException,
@@ -73,10 +72,20 @@ export class AuthController {
     // which returns UserResponse
 
     const user = req.user as UserResponse;
-    // LocalStrategy already validated password.
-    // But if user is unverified, req.user won't be set
-    // because LocalStrategy throws. So we need to handle
-    // the unverified case differently — see Step 8D below.
+
+    // LocalStrategy already validated password. But if user is unverified, req.user won't be set because LocalStrategy throws.
+    // So we need to handle the unverified case differently.
+    if (!user.isVerified) {
+      const result = await this.otpTokenService.generateAndSendOtp(
+        user.id,
+        user.email,
+      );
+
+      throw new ForbiddenException({
+        message: 'Email not verified. Please check your inbox',
+        otpTokenId: result.otpTokenId,
+      });
+    }
 
     return this.authService.login(user, {
       userAgent: req.headers['user-agent'],

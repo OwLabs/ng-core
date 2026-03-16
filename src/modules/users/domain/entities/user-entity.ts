@@ -104,7 +104,7 @@ export class User {
       password: props.password ?? null,
       provider: props.provider,
       providerId: props.providerId ?? null,
-      isVerified: false,
+      isVerified: props.isVerified,
       avatar: props.avatar ?? null,
       roles: [UserRole.LIMITED_ACCESS_USER],
     });
@@ -243,9 +243,9 @@ export class User {
     return this.hasRole(UserRole.SUPER_ADMIN) || this.hasRole(UserRole.ADMIN);
   }
 
-  verify(): boolean {
+  verify(): void {
+    this._isVerified = true;
     this.touch();
-    return (this._isVerified = true);
   }
 
   /**

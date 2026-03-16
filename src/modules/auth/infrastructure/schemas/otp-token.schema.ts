@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Types } from 'mongoose';
+import { Document, Types } from 'mongoose';
+import { OtpStatus } from '../../domain/enums';
 
 @Schema({ timestamps: true })
 export class OtpToken extends Document {
@@ -8,6 +9,7 @@ export class OtpToken extends Document {
 
   @Prop({ required: true })
   email: string;
+  
   @Prop({ required: true })
   codeHash: string;
 
@@ -24,10 +26,10 @@ export class OtpToken extends Document {
   maxResends: number;
 
   @Prop({
-    default: 'pending',
-    enum: ['pending', 'verified', 'expired', 'blocked'],
+    default: OtpStatus.PENDING,
+    enum: Object.values(OtpStatus),
   })
-  status: string;
+  status: OtpStatus;
 
   @Prop({ required: true, index: { expires: 0 } })
   expiresAt: Date;

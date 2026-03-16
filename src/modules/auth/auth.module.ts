@@ -14,7 +14,7 @@ import {
   AuthController,
   GoogleAuthController,
 } from './presentation/controllers';
-import { AuthService, OtpTokenService, RefreshTokenService } from './services';
+import { AuthService, ConsoleEmailService, NodemailerEmailService, OtpTokenService, RefreshTokenService } from './services';
 import {
   OTP_TOKEN_REPOSITORY,
   REFRESH_TOKEN_REPOSITORY,
@@ -22,8 +22,6 @@ import {
 import { RefreshTokenRepositoryImpl } from './infrastructure/repositories';
 import { GoogleStrategy, JwtStrategy, LocalStrategy } from './strategies';
 import { EMAIL_SERVICE } from './domain/repositories/email-service.interface';
-import { ConsoleEmailService } from './infrastructure/console-email.service';
-import { NodemailerEmailService } from './infrastructure/nodemailer-email.service';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { OtpTokenRepositoryImpl } from './infrastructure/repositories/otp-token-repository';
 import { OtpToken } from './domain/entities';

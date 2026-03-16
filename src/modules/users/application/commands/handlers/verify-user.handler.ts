@@ -12,7 +12,7 @@ export class VerifyUserHandler implements ICommandHandler<VerifyUserCommand> {
     @Inject(USER_REPOSITORY) private readonly userRepository: IUserRepository,
   ) {}
 
-  async execute(command: VerifyUserCommand): Promise<any> {
+  async execute(command: VerifyUserCommand): Promise<void> {
     const user = await this.userRepository.findById(command.userId);
 
     if (!user) {

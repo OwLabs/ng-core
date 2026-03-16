@@ -1,6 +1,6 @@
 import { Types } from 'mongoose';
 import { UserResponse } from 'src/modules/users/domain/types';
-import { OtpStatus } from '../enums/otp-status.enum';
+import { OtpStatus } from '../enums';
 
 /**
  * AuthResult — discriminated union for login validation
@@ -21,8 +21,8 @@ export type AuthResult =
   | { success: false; message: string; unverified?: undefined }
   | {
       success: false;
-      message: string;
       unverified: true;
+      user: UserResponse;
       userId: string;
       email: string;
     };
@@ -122,4 +122,19 @@ export interface OtpTokenPersistenceProps {
   expiresAt: Date;
   createdAt?: Date;
   updatedAt?: Date;
+}
+
+export interface OtpTokenToPersistence {
+  _id: Types.ObjectId;
+  userId: Types.ObjectId;
+  email: string;
+  codeHash: string;
+  attempts: number;
+  maxAttempts: number;
+  resendCount: number;
+  maxResends: number;
+  status: OtpStatus;
+  expiresAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }

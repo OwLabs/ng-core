@@ -45,6 +45,7 @@ export interface CreateUserProps {
   provider: AuthProvider;
   providerId?: string | null;
   avatar?: string | null;
+  isVerified?: boolean;
 }
 
 /**
@@ -113,7 +114,7 @@ export interface UserResponse {
   provider: string;
   providerId?: string | null;
   avatar?: string | null;
-  isVerified: boolean;
+  isVerified?: boolean;
   roles: string[];
   createdAt: Date;
   updatedAt: Date;
