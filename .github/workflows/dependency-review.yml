@@ -41,6 +41,6 @@ jobs:
           comment-summary-in-pr: always
           base-ref: ${{ github.event.pull_request.base.sha || github.event.before }}
           head-ref: ${{ github.event.pull_request.head.sha || github.sha }}
-        #   fail-on-severity: moderate
+          fail-on-severity: critical
         #   deny-licenses: GPL-1.0-or-later, LGPL-2.0-or-later
         #   retry-on-snapshot-warnings: true
