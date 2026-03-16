@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { IEmailService } from '../domain/repositories/email-service.interface';
+import { IEmailService } from '../domain/repositories';
 
 @Injectable()
 export class ConsoleEmailService implements IEmailService {

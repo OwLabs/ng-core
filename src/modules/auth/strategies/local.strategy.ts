@@ -14,6 +14,12 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     const result = await this.authService.validateUser(email, password);
 
     if (!result.success) {
+      // (SCENARIO) If it's a verification issue, we STILL return the user so the controller can handle it
+      if (result.unverified) {
+        return result.user;
+      }
+
+      // If it's a WRONG password or email, then we throw as usual.
       throw new UnauthorizedException(result.message);
     }
 

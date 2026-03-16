@@ -68,12 +68,12 @@ export class AuthService {
       new CreateUserCommand(dto.email, dto.name, AuthProvider.LOCAL, hashed),
     );
 
-    const otpTokenId = await this.otpTokenService.generateAndSendOtp(
+    const result = await this.otpTokenService.generateAndSendOtp(
       user.id,
-      dto.email,
+      user.email.getValue(),
     );
 
-    return { user: user.toResponse(), otpTokenId };
+    return { user: user.toResponse(), otpTokenId: result.otpTokenId };
   }
 
   /**
@@ -110,13 +110,13 @@ export class AuthService {
       };
     }
 
-    if (!user.verify()) {
+    if (!user.isVerified) {
       return {
         success: false,
         unverified: true,
+        user: user.toResponse(),
         userId: user.id.toString(),
         email: user.email.getValue(),
-        message: 'Email not verified. Please check your inbox.',
       };
     }
 
@@ -178,8 +178,8 @@ export class AuthService {
           AuthProvider.GOOGLE,
           null,
           profile.providerId,
-          true,
           profile.picture,
+          true,
         ),
       );
     }

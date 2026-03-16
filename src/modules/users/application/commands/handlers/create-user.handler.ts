@@ -48,6 +48,7 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
       provider: command.provider,
       providerId: command.providerId ?? null,
       avatar: command.avatar ?? null,
+      isVerified: command.isVerified ?? false,
     });
 
     // 3. Persist via repository

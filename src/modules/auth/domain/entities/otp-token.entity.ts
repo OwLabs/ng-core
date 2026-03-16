@@ -1,9 +1,10 @@
 import { Types } from 'mongoose';
-import { OtpStatus } from '../enums/otp-status.enum';
+import { OtpStatus } from '../enums';
 import {
   CreateOtpTokenProps,
   OtpTokenPersistenceProps,
   OtpTokenProps,
+  OtpTokenToPersistence,
 } from '../types';
 
 export class OtpToken {
@@ -21,7 +22,7 @@ export class OtpToken {
   private _updatedAt: Date;
 
   private constructor(props: OtpTokenProps) {
-    this._id = props.id ?? new Types.ObjectId();
+    this._id = props.id;
     this._userId = props.userId;
     this._email = props.email;
     this._codeHash = props.codeHash;
@@ -29,7 +30,7 @@ export class OtpToken {
     this._maxAttempts = props.maxAttempts;
     this._resendCount = props.resendCount;
     this._maxResends = props.maxResends;
-    this._status = props.status as OtpStatus;
+    this._status = props.status;
     this._expiresAt = props.expiresAt;
     this._createdAt = props.createdAt;
     this._updatedAt = props.updatedAt;
@@ -161,9 +162,9 @@ export class OtpToken {
     this._expiresAt = newExpiry;
   }
 
-  toPersistence(): OtpTokenPersistenceProps {
+  toPersistence(): OtpTokenToPersistence {
     return {
-      id: this._id,
+      _id: this._id,
       userId: this._userId,
       email: this._email,
       codeHash: this._codeHash,
