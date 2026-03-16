@@ -14,7 +14,13 @@ import {
   AuthController,
   GoogleAuthController,
 } from './presentation/controllers';
-import { AuthService, ConsoleEmailService, NodemailerEmailService, OtpTokenService, RefreshTokenService } from './services';
+import {
+  AuthService,
+  ConsoleEmailService,
+  NodemailerEmailService,
+  OtpTokenService,
+  RefreshTokenService,
+} from './services';
 import {
   OTP_TOKEN_REPOSITORY,
   REFRESH_TOKEN_REPOSITORY,

@@ -1,1 +1,1 @@
-export * from './otp-status.enum'
+export * from './otp-status.enum';

@@ -1,13 +1,12 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CreateUserCommand } from '../impl';
-import { ConflictException, Inject } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
 import {
   IUserRepository,
   USER_REPOSITORY,
 } from 'src/modules/users/domain/repositories';
 import { User } from 'src/modules/users/domain/entities';
 import { UserDuplicateEmailException } from 'src/modules/users/domain/exceptions';
-import { AuthProvider } from 'src/modules/users/domain/enums';
 
 /**
  * Handler for CreateUserCommand

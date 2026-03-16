@@ -9,7 +9,7 @@ export class OtpToken extends Document {
 
   @Prop({ required: true })
   email: string;
-  
+
   @Prop({ required: true })
   codeHash: string;
 
