@@ -14,7 +14,7 @@ export class HttpLoggerMiddleware implements NestMiddleware {
       const packageJsonPath = path.resolve(process.cwd(), 'package.json');
       const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
       this.version = packageJson.version || 'unknown';
-    } catch (e) {
+    } catch (_e) {
       // Fallback if package.json cannot be read
     }
   }
@@ -43,7 +43,7 @@ export class HttpLoggerMiddleware implements NestMiddleware {
         if (typeof responseBody === 'string') {
           parsedResponse = JSON.parse(responseBody);
         }
-      } catch (e) {
+      } catch (_e) {
         // Ignore parse errors, keep as string
       }
 
