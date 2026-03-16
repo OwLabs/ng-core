@@ -26,6 +26,7 @@ export class OtpToken extends Document {
   maxResends: number;
 
   @Prop({
+    type: String,
     default: OtpStatus.PENDING,
     enum: Object.values(OtpStatus),
   })
