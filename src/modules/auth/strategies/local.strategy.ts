@@ -3,6 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-local';
 import { AuthService } from '../services';
 import { UserResponse } from 'src/modules/users/domain/types';
+import { UserValidationException } from 'src/modules/users/domain/exceptions';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
@@ -20,7 +21,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       }
 
       // If it's a WRONG password or email, then we throw as usual.
-      throw new UnauthorizedException(result.message);
+      throw new UserValidationException(result.message, this, result.errorCode);
     }
 
     // result.user becomes req.user in the controller

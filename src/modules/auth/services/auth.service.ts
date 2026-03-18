@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { JwtService } from '@nestjs/jwt';
@@ -12,6 +12,7 @@ import { AuthProvider } from 'src/modules/users/domain/enums';
 import { AuthResult, AuthTokens, TokenPayload } from '../domain/types';
 import { GetUserByEmailQuery } from 'src/modules/users/application/queries/impl';
 import { OtpTokenService } from './otp-token.service';
+import { UserValidationErrorCodes } from 'src/modules/users/domain/exceptions/users-error.codes';
 /**
  * AuthService — refactored
  *
@@ -90,7 +91,12 @@ export class AuthService {
     );
 
     if (!user) {
-      return { success: false, message: 'Email not found' };
+      return {
+        success: false,
+        message: 'Email not found',
+        errorCode: UserValidationErrorCodes.EMAIL_NOT_FOUND,
+        httpStatus: HttpStatus.NOT_FOUND,
+      };
     }
 
     // Check if this is a local account (not Google/OAuth)
@@ -98,6 +104,8 @@ export class AuthService {
       return {
         success: false,
         message: 'This account uses Google login. Please sign in with Google',
+        errorCode: UserValidationErrorCodes.ACCOUNT_PROVIDER_MISMATCH,
+        httpStatus: HttpStatus.FORBIDDEN,
       };
     }
 
@@ -107,6 +115,8 @@ export class AuthService {
       return {
         success: false,
         message: 'Incorrect password',
+        errorCode: UserValidationErrorCodes.INCORRECT_PASSWORD,
+        httpStatus: HttpStatus.UNAUTHORIZED,
       };
     }
 

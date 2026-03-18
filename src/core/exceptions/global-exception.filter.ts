@@ -49,7 +49,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       timestamp: getMalaysiaTimestamp(),
     };
 
-    this.eventEmitter.emit('system.error.occured', errorPayload);
+    this.eventEmitter.emit('system.error.occurred', errorPayload);
 
     // Send generic response to user
     response.status(status).json({
@@ -57,6 +57,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       errorCode: code,
       message: message,
       timestamp: errorPayload.timestamp,
+      ...(isAppException && exception.data ? { data: exception.data } : {}),
     });
   }
 }
