@@ -10,3 +10,14 @@ export enum UsersNameValueObjectErrorCodes {
 export enum EmailValueObjectErrorCodes {
   INVALID_EMAIL = 'EMAIL_DOMAIN_OR_TLD_NOT_ALLOWED',
 }
+
+export enum IsUserVerifiedErrorCodes {
+  USER_NOT_VERIFIED = 'USER_NOT_VERIFIED',
+}
+
+export enum UserValidationErrorCodes {
+  EMAIL_NOT_FOUND = 'EMAIL_NOT_FOUND',
+  ACCOUNT_PROVIDER_MISMATCH = 'THIS ACCOUNT USES GOOGLE LOGIN. PLEASE SIGN IN WITH GOOGLE',
+  INCORRECT_PASSWORD = 'INCORRECT_PASSWORD',
+  USER_NOT_VERIFIED = 'USER_NOT_VERIFIED',
+}

@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  ForbiddenException,
   Post,
   Request,
   UnauthorizedException,
@@ -29,6 +28,7 @@ import { AuthTokens } from '../../domain/types';
 import { extractClientIp } from '../utils';
 import { VerifyUserCommand } from 'src/modules/users/application/commands/impl';
 import { CommandBus } from '@nestjs/cqrs';
+import { UserVerificationException } from 'src/modules/users/domain/exceptions';
 
 /**
  * AuthController — fixed
@@ -65,8 +65,8 @@ export class AuthController {
   @UseGuards(AuthGuard('local'))
   @Post('login')
   async login(
-    @Request() dto: LoginDto,
-    req: ExpressRequest,
+    @Body() dto: LoginDto,
+    @Request() req: ExpressRequest,
   ): Promise<AuthTokens> {
     // req.user is set by LocalStrategy.validate()
     // which returns UserResponse
@@ -81,10 +81,11 @@ export class AuthController {
         user.email,
       );
 
-      throw new ForbiddenException({
-        message: 'Email not verified. Please check your inbox',
-        otpTokenId: result.otpTokenId,
-      });
+      throw new UserVerificationException(
+        'Email not verified. Please check your inbox',
+        this,
+        { otpTokenId: result.otpTokenId },
+      );
     }
 
     return this.authService.login(user, {
