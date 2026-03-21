@@ -23,23 +23,23 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const isHttpException = exception instanceof HttpException;
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let code = 'SYS_5000_UNKNOWN';
+    let errorCode = 'SYS_5000_UNKNOWN';
     let module = 'System';
     let message = 'Internal server error';
 
     if (isAppException) {
       status = exception.statusCode;
-      code = exception.code;
+      errorCode = exception.errorCode;
       module = exception.module; // This is now EXACTLY the class name (e.g. 'User', 'GetUserByIdHandler')
       message = exception.message;
     } else if (isHttpException) {
       status = exception.getStatus();
       message = exception.message;
-      code = `HTTP_${status}`;
+      errorCode = `HTTP_${status}`;
     }
 
     const errorPayload: ErrorEventPayload = {
-      errorCode: code,
+      errorCode: errorCode,
       module: module,
       message: message,
       stackTrace: exception.stack || '',
@@ -54,7 +54,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     // Send generic response to user
     response.status(status).json({
       success: false,
-      errorCode: code,
+      errorCode: errorCode,
       message: message,
       timestamp: errorPayload.timestamp,
       ...(isAppException && exception.data ? { data: exception.data } : {}),

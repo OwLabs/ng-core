@@ -180,14 +180,8 @@ export class RefreshTokenService {
    *
    * FIXED: Removed unnecessary DB call to fetch username
    */
-  async revokeTokenById(id: string): Promise<{ message: string }> {
-    const token = await this.refreshTokenRepo.revokeById(id);
-
-    return {
-      message: token
-        ? 'Session has been revoked successfully'
-        : `Token ${id} not found`,
-    };
+  async revokeTokenById(id: string) {
+    await this.refreshTokenRepo.revokeById(id);
   }
 
   /**

@@ -1,21 +1,26 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { VersioningType } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { ApiVersionEnum, SwaggerVersionEnum } from './common/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { GlobalExceptionFilter } from './core/exceptions/global-exception.filter';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true, // IMPORTANT: Tell NestJS to wait for our custom logger
   });
+  app.use(cookieParser());
 
   // Tell the entire Nest application to use Winston
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
 
-  app.useGlobalFilters(new GlobalExceptionFilter(app.get(EventEmitter2)));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+    }),
+  );
 
   app.enableVersioning({
     type: VersioningType.URI,

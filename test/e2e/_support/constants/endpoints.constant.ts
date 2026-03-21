@@ -14,4 +14,6 @@ export const ACTIONS = {
   UPLOAD: 'upload',
   DOWNLOAD: 'download',
   MY_MATERIALS: 'my-materials',
+  VERIFY_OTP: 'verify-otp',
+  RESEND_OTP: 'resend-otp',
 } as const;

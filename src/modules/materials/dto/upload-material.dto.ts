@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { MaterialType } from '../domain/enums';
 
 export class UploadMaterialDto {
@@ -30,6 +31,16 @@ export class UploadMaterialDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return value;
+      }
+    }
+    return value;
+  })
   assignedTo?: string[];
 
   @IsOptional()
