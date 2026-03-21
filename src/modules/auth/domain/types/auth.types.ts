@@ -2,7 +2,6 @@ import { Types } from 'mongoose';
 import { UserResponse } from 'src/modules/users/domain/types';
 import { OtpStatus } from '../enums';
 import { UserValidationErrorCodes } from 'src/modules/users/domain/exceptions/users-error.codes';
-import { HttpStatus } from '@nestjs/common';
 
 /**
  * AuthResult — discriminated union for login validation
@@ -24,7 +23,6 @@ export type AuthResult =
       success: false;
       message: string;
       errorCode: UserValidationErrorCodes;
-      httpStatus: HttpStatus;
       unverified?: undefined;
     }
   | {

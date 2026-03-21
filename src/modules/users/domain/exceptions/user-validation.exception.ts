@@ -8,6 +8,26 @@ export class UserValidationException extends AppException {
     context: string | object,
     errorCode: UserValidationErrorCodes,
   ) {
-    super(message, errorCode, context, HttpStatus.FORBIDDEN);
+    super(
+      message,
+      errorCode,
+      context,
+      UserValidationException.mapErrorCodeToStatus(errorCode),
+    );
+  }
+
+  private static mapErrorCodeToStatus(
+    errorCode: UserValidationErrorCodes,
+  ): HttpStatus {
+    switch (errorCode) {
+      case UserValidationErrorCodes.EMAIL_NOT_FOUND:
+        return HttpStatus.NOT_FOUND;
+      case UserValidationErrorCodes.ACCOUNT_PROVIDER_MISMATCH:
+        return HttpStatus.FORBIDDEN;
+      case UserValidationErrorCodes.INCORRECT_PASSWORD:
+        return HttpStatus.UNAUTHORIZED;
+      default:
+        return HttpStatus.BAD_REQUEST;
+    }
   }
 }

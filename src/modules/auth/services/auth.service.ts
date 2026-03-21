@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { JwtService } from '@nestjs/jwt';
@@ -95,7 +95,6 @@ export class AuthService {
         success: false,
         message: 'Email not found',
         errorCode: UserValidationErrorCodes.EMAIL_NOT_FOUND,
-        httpStatus: HttpStatus.NOT_FOUND,
       };
     }
 
@@ -105,7 +104,6 @@ export class AuthService {
         success: false,
         message: 'This account uses Google login. Please sign in with Google',
         errorCode: UserValidationErrorCodes.ACCOUNT_PROVIDER_MISMATCH,
-        httpStatus: HttpStatus.FORBIDDEN,
       };
     }
 
@@ -116,7 +114,6 @@ export class AuthService {
         success: false,
         message: 'Incorrect password',
         errorCode: UserValidationErrorCodes.INCORRECT_PASSWORD,
-        httpStatus: HttpStatus.UNAUTHORIZED,
       };
     }
 

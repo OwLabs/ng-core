@@ -1,21 +1,21 @@
 import { HttpStatus } from '@nestjs/common';
 
 export class AppException extends Error {
-  public readonly code: string;
+  public readonly errorCode: string;
   public readonly module: string; // This will store the exact Class Name
   public readonly statusCode: HttpStatus;
   public readonly data?: Record<string, any>;
 
   constructor(
     message: string,
-    code: string,
+    errorCode: string,
     context: string | object,
-    statusCode: HttpStatus = HttpStatus.BAD_REQUEST,
-    data?: Record<string, any>,
+    statusCode: HttpStatus,
+    data: Record<string, any> = {},
   ) {
     super(message);
     this.name = this.constructor.name;
-    this.code = code;
+    this.errorCode = errorCode;
     this.statusCode = statusCode;
     this.data = data;
 

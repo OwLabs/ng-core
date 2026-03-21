@@ -13,8 +13,11 @@ import {
   LogCleanupService,
 } from './core/logger';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { GlobalExceptionFilter } from './core/exceptions/global-exception.filter';
 import * as fs from 'fs';
 import * as path from 'path';
+import { ResponseInterceptor } from './core/interceptors/response.interceptor';
 
 @Module({
   imports: [
@@ -30,6 +33,14 @@ import * as path from 'path';
     AppService,
     ErrorEventListener,
     LogCleanupService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionFilter,
+    },
     {
       provide: 'APP_VERSION',
       useFactory: () => {
