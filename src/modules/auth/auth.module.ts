@@ -3,17 +3,34 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { PassportModule } from '@nestjs/passport';
 import { UsersModule } from '../users/users.module';
 import { MongooseModule } from '@nestjs/mongoose';
-import { RefreshToken, RefreshTokenSchema } from './infrastructure/schemas';
+import {
+  OtpTokenSchema,
+  RefreshToken,
+  RefreshTokenSchema,
+} from './infrastructure/schemas';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import {
   AuthController,
   GoogleAuthController,
 } from './presentation/controllers';
-import { AuthService, RefreshTokenService } from './services';
-import { REFRESH_TOKEN_REPOSITORY } from './domain/repositories';
+import {
+  AuthService,
+  ConsoleEmailService,
+  NodemailerEmailService,
+  OtpTokenService,
+  RefreshTokenService,
+} from './services';
+import {
+  OTP_TOKEN_REPOSITORY,
+  REFRESH_TOKEN_REPOSITORY,
+} from './domain/repositories';
 import { RefreshTokenRepositoryImpl } from './infrastructure/repositories';
 import { GoogleStrategy, JwtStrategy, LocalStrategy } from './strategies';
+import { EMAIL_SERVICE } from './domain/repositories/email-service.interface';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { OtpTokenRepositoryImpl } from './infrastructure/repositories/otp-token-repository';
+import { OtpToken } from './domain/entities';
 
 /**
  * AuthModule — rewired
@@ -33,10 +50,12 @@ import { GoogleStrategy, JwtStrategy, LocalStrategy } from './strategies';
     CqrsModule,
     PassportModule,
     UsersModule,
+    MailerModule,
 
     // Register RefreshToken schema locally (auth owns it)
     MongooseModule.forFeature([
       { name: RefreshToken.name, schema: RefreshTokenSchema },
+      { name: OtpToken.name, schema: OtpTokenSchema },
     ]),
 
     // JWT Configuration
@@ -52,6 +71,23 @@ import { GoogleStrategy, JwtStrategy, LocalStrategy } from './strategies';
       }),
       inject: [ConfigService],
     }),
+
+    MailerModule.forRootAsync({
+      useFactory: async (config: ConfigService) => ({
+        transport: {
+          host: config.get('SMTP_HOST', 'smtp.ethereal.email'),
+          port: config.get('SMTP_PORT', 587),
+          auth: {
+            user: config.get('SMTP_USER'),
+            pass: config.get('SMTP_PASS'),
+          },
+        },
+        defaults: {
+          from: config.get('SMTP_FROM', '"ng-core" <noreply@example.com>'),
+        },
+      }),
+      inject: [ConfigService],
+    }),
   ],
 
   controllers: [AuthController, GoogleAuthController],
@@ -59,6 +95,7 @@ import { GoogleStrategy, JwtStrategy, LocalStrategy } from './strategies';
     // Services (auth uses services, not CQRS handlers)
     AuthService,
     RefreshTokenService,
+    OtpTokenService,
 
     // Repository - interface token → implementation
     {
@@ -70,6 +107,17 @@ import { GoogleStrategy, JwtStrategy, LocalStrategy } from './strategies';
     LocalStrategy,
     JwtStrategy,
     GoogleStrategy,
+    {
+      provide: EMAIL_SERVICE,
+      useClass:
+        process.env.NODE_ENV === 'production'
+          ? NodemailerEmailService
+          : ConsoleEmailService,
+    },
+    {
+      provide: OTP_TOKEN_REPOSITORY,
+      useClass: OtpTokenRepositoryImpl,
+    },
   ],
 
   exports: [AuthService, RefreshTokenService],

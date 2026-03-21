@@ -11,6 +11,8 @@ import { CreateUserCommand } from 'src/modules/users/application/commands/impl';
 import { AuthProvider } from 'src/modules/users/domain/enums';
 import { AuthResult, AuthTokens, TokenPayload } from '../domain/types';
 import { GetUserByEmailQuery } from 'src/modules/users/application/queries/impl';
+import { OtpTokenService } from './otp-token.service';
+import { UserValidationErrorCodes } from 'src/modules/users/domain/exceptions/users-error.codes';
 /**
  * AuthService — refactored
  *
@@ -38,6 +40,7 @@ export class AuthService {
     private readonly queryBus: QueryBus,
     private readonly configService: ConfigService,
     private readonly refreshTokenService: RefreshTokenService,
+    private readonly otpTokenService: OtpTokenService,
   ) {
     // Configurable salt rounds (default 10 if not set)
     this.saltRounds = this.configService.get<number>('BCRYPT_SALT_ROUNDS', 10);
@@ -57,14 +60,21 @@ export class AuthService {
    *   the check and then both try to create. Let the handler handle it
    *   (it has the repository-level lock)
    */
-  async register(dto: RegisterDto): Promise<UserResponse> {
+  async register(
+    dto: RegisterDto,
+  ): Promise<{ user: UserResponse; otpTokenId: string }> {
     const hashed = await bcrypt.hash(dto.password, this.saltRounds);
 
     const user: User = await this.commandBus.execute(
       new CreateUserCommand(dto.email, dto.name, AuthProvider.LOCAL, hashed),
     );
 
-    return user.toResponse();
+    const result = await this.otpTokenService.generateAndSendOtp(
+      user.id,
+      user.email.getValue(),
+    );
+
+    return { user: user.toResponse(), otpTokenId: result.otpTokenId };
   }
 
   /**
@@ -81,7 +91,11 @@ export class AuthService {
     );
 
     if (!user) {
-      return { success: false, message: 'Email not found' };
+      return {
+        success: false,
+        message: 'Email not found',
+        errorCode: UserValidationErrorCodes.EMAIL_NOT_FOUND,
+      };
     }
 
     // Check if this is a local account (not Google/OAuth)
@@ -89,6 +103,7 @@ export class AuthService {
       return {
         success: false,
         message: 'This account uses Google login. Please sign in with Google',
+        errorCode: UserValidationErrorCodes.ACCOUNT_PROVIDER_MISMATCH,
       };
     }
 
@@ -98,6 +113,17 @@ export class AuthService {
       return {
         success: false,
         message: 'Incorrect password',
+        errorCode: UserValidationErrorCodes.INCORRECT_PASSWORD,
+      };
+    }
+
+    if (!user.isVerified) {
+      return {
+        success: false,
+        unverified: true,
+        user: user.toResponse(),
+        userId: user.id.toString(),
+        email: user.email.getValue(),
       };
     }
 
@@ -160,6 +186,7 @@ export class AuthService {
           null,
           profile.providerId,
           profile.picture,
+          true,
         ),
       );
     }

@@ -1,30 +1,19 @@
-import { Injectable, Logger, NestMiddleware } from '@nestjs/common';
+import { Inject, Injectable, Logger, NestMiddleware } from '@nestjs/common';
 import { NextFunction, Request, Response } from 'express';
-import * as fs from 'fs';
-import * as path from 'path';
 
 @Injectable()
 export class HttpLoggerMiddleware implements NestMiddleware {
-  // Creating a logger with the specific 'HTTP' context
+  // Using NestJS Logger with 'HTTP' context — routed through Winston automatically
   private logger = new Logger('HTTP');
-  private version = 'unknown';
 
-  constructor() {
-    try {
-      const packageJsonPath = path.resolve(process.cwd(), 'package.json');
-      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-      this.version = packageJson.version || 'unknown';
-    } catch (e) {
-      // Fallback if package.json cannot be read
-    }
-  }
+  constructor(@Inject('APP_VERSION') private readonly version: string) {}
 
   use(request: Request, response: Response, next: NextFunction): void {
     const { method, originalUrl, body, headers } = request;
     const requestTime = new Date().toISOString();
     const startTime = Date.now();
 
-    // To capture the response body, we must intercept the res.send method
+    // Intercept response.send to capture the response body
     const originalSend = response.send;
     let responseBody: any;
 
@@ -33,7 +22,7 @@ export class HttpLoggerMiddleware implements NestMiddleware {
       return originalSend.apply(response, args as any);
     };
 
-    // Hook into the response finish event to get the status code
+    // Hook into the response finish event to get the final status code
     response.on('finish', () => {
       const { statusCode } = response;
       const processingTime = Date.now() - startTime;
@@ -43,7 +32,7 @@ export class HttpLoggerMiddleware implements NestMiddleware {
         if (typeof responseBody === 'string') {
           parsedResponse = JSON.parse(responseBody);
         }
-      } catch (e) {
+      } catch (_e) {
         // Ignore parse errors, keep as string
       }
 
@@ -59,13 +48,17 @@ export class HttpLoggerMiddleware implements NestMiddleware {
         version: this.version,
       };
 
+      // Pre-stringify the log body so the file format receives a clean JSON string.
+      // This avoids nest-winston's message destructuring quirk with object payloads.
+      const jsonLine = JSON.stringify(logBody);
+
       // Log with proper severity level based on the HTTP status code
       if (statusCode >= 500) {
-        this.logger.error(logBody);
+        this.logger.error(jsonLine);
       } else if (statusCode >= 400) {
-        this.logger.warn(logBody);
+        this.logger.warn(jsonLine);
       } else {
-        this.logger.debug(logBody); // 'log' maps to 'info' in Winston
+        this.logger.debug(jsonLine);
       }
     });
 

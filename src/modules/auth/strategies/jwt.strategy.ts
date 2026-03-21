@@ -3,6 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { TokenPayload } from '../domain/types';
+import { Request } from 'express';
+import { AUTH_COOKIE_NAMES } from '../domain/constants';
 
 /**
  * JwtStrategy — fixed
@@ -22,7 +24,13 @@ import { TokenPayload } from '../domain/types';
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(configService: ConfigService) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        // Priority 1: Check the secure HttpOnly cookie (best for web)
+        (req: Request) => req.cookies[AUTH_COOKIE_NAMES.ACCESS_TOKEN],
+
+        // Priority 2: Check the Authorization header (for mobile apps, Postman, etc.)
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ]),
       ignoreExpiration: false,
       secretOrKey: configService.getOrThrow<string>('JWT_SECRET'),
     });

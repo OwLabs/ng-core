@@ -1,25 +1,18 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger as WinstonLogger } from 'winston';
 import { ErrorEventPayload } from '../exceptions/types';
 
 @Injectable()
 export class ErrorEventListener {
-  constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: WinstonLogger,
-  ) {}
+  private readonly logger = new Logger('ErrorWorker');
 
-  @OnEvent('system.error.occured', { async: true }) // Runs in background
+  @OnEvent('system.error.occurred', { async: true }) // Runs in background
   handleCriticalErrorEvent(payload: ErrorEventPayload) {
+    // Message includes module, error code, description, method, and path
+    // Stack trace is passed as second arg → Winston receives it as info.stack
     this.logger.error(
-      `[${payload.module}] ${payload.errorCode} - ${payload.message}`,
-      {
-        context: 'ErrorWorker',
-        stackTrace: payload.stackTrace,
-        path: payload.path,
-        method: payload.method,
-      },
+      `[${payload.module}] ${payload.errorCode} - ${payload.message} | ${payload.method} ${payload.path}`,
+      payload.stackTrace,
     );
   }
 }

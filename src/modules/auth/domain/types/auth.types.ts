@@ -1,6 +1,7 @@
-import { Type } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { UserResponse } from 'src/modules/users/domain/types';
+import { OtpStatus } from '../enums';
+import { UserValidationErrorCodes } from 'src/modules/users/domain/exceptions/users-error.codes';
 
 /**
  * AuthResult — discriminated union for login validation
@@ -18,7 +19,19 @@ import { UserResponse } from 'src/modules/users/domain/types';
  */
 export type AuthResult =
   | { success: true; user: UserResponse }
-  | { success: false; message: string };
+  | {
+      success: false;
+      message: string;
+      errorCode: UserValidationErrorCodes;
+      unverified?: undefined;
+    }
+  | {
+      success: false;
+      unverified: true;
+      user: UserResponse;
+      userId: string;
+      email: string;
+    };
 
 /**
  * TokenPayload - what gets signed into the JWT
@@ -77,4 +90,57 @@ export interface RefreshTokenPersistenceProps {
   expiresAt: Date;
   createdAt?: Date;
   updatedAt?: Date;
+}
+
+export interface OtpTokenProps {
+  id: Types.ObjectId;
+  userId: Types.ObjectId;
+  email: string;
+  codeHash: string;
+  attempts: number;
+  maxAttempts: number;
+  resendCount: number;
+  maxResends: number;
+  status: OtpStatus;
+  expiresAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateOtpTokenProps {
+  id: Types.ObjectId;
+  userId: Types.ObjectId | string;
+  email: string;
+  codeHash: string;
+  expiresAt: Date;
+}
+
+export interface OtpTokenPersistenceProps {
+  id: Types.ObjectId;
+  userId: Types.ObjectId;
+  email: string;
+  codeHash: string;
+  attempts?: number;
+  maxAttempts?: number;
+  resendCount?: number;
+  maxResends?: number;
+  status?: OtpStatus;
+  expiresAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface OtpTokenToPersistence {
+  _id: Types.ObjectId;
+  userId: Types.ObjectId;
+  email: string;
+  codeHash: string;
+  attempts: number;
+  maxAttempts: number;
+  resendCount: number;
+  maxResends: number;
+  status: OtpStatus;
+  expiresAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }

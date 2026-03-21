@@ -6,9 +6,18 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { MaterialModule } from './modules/materials/materials.module';
 import { WinstonModule } from 'nest-winston';
-import { HttpLoggerMiddleware, winstonConfig } from './core/logger';
+import {
+  HttpLoggerMiddleware,
+  winstonConfig,
+  ErrorEventListener,
+  LogCleanupService,
+} from './core/logger';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { ErrorEventListener } from './core/logger/error-event.listener';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { GlobalExceptionFilter } from './core/exceptions/global-exception.filter';
+import * as fs from 'fs';
+import * as path from 'path';
+import { ResponseInterceptor } from './core/interceptors/response.interceptor';
 
 @Module({
   imports: [
@@ -20,10 +29,34 @@ import { ErrorEventListener } from './core/logger/error-event.listener';
     MaterialModule,
   ],
   controllers: [AppController],
-  providers: [AppService, ErrorEventListener],
+  providers: [
+    AppService,
+    ErrorEventListener,
+    LogCleanupService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionFilter,
+    },
+    {
+      provide: 'APP_VERSION',
+      useFactory: () => {
+        try {
+          const pkgPath = path.resolve(process.cwd(), 'package.json');
+          const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+          return pkg.version || 'unknown';
+        } catch {
+          return 'unknown';
+        }
+      },
+    },
+  ],
 })
 export class AppModule implements NestModule {
-  // Apply here for our HTTP middleware to all routes (*)
+  // Apply HTTP logging middleware to all routes
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(HttpLoggerMiddleware).forRoutes('*');
   }

@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CreateUserCommand } from '../impl';
-import { ConflictException, Inject } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
 import {
   IUserRepository,
   USER_REPOSITORY,
@@ -47,6 +47,7 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
       provider: command.provider,
       providerId: command.providerId ?? null,
       avatar: command.avatar ?? null,
+      isVerified: command.isVerified ?? false,
     });
 
     // 3. Persist via repository
