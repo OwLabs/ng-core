@@ -4,6 +4,7 @@ import { getConnectionToken } from '@nestjs/mongoose';
 import mongoose, { Connection } from 'mongoose';
 import { AppModule } from 'src/app.module';
 import { ApiVersionEnum } from 'src/common/config';
+import cookieParser from 'cookie-parser';
 
 let app: INestApplication;
 
@@ -17,6 +18,8 @@ export async function setupE2EApp(): Promise<{ app: INestApplication }> {
   }).compile();
 
   app = moduleFixtture.createNestApplication();
+
+  app.use(cookieParser());
 
   app.enableVersioning({
     type: VersioningType.URI,

@@ -8,20 +8,27 @@ import { registerAndLogin, RegisterAndLoginResult } from '../_support/helpers';
 import request from 'supertest';
 import { ApiVersionEnum } from 'src/common/config';
 import { ACTIONS, TOPICS } from '../_support/constants';
+import { UserRole } from 'src/modules/users/domain/enums';
+import { AUTH_COOKIE_NAMES } from 'src/modules/auth/domain/constants';
+import { parseCookieValue } from '../_support/utils';
 
 describe('Auth Refresh Tokens E2E', () => {
   let app: INestApplication;
-  let data: RegisterAndLoginResult | null;
+  let data: RegisterAndLoginResult;
 
   beforeAll(async () => {
     const setup = await setupE2EApp();
     app = setup.app;
 
-    data = await registerAndLogin(app, {
-      email: 'syafiq_feroz@gmail.com',
-      name: 'Syafiq Feroz',
-      password: 'password123',
-    });
+    data = await registerAndLogin(
+      app,
+      {
+        email: 'syafiq_feroz@gmail.com',
+        name: 'Syafiq Feroz',
+        password: 'password123',
+      },
+      UserRole.STUDENT,
+    );
   });
 
   afterAll(async () => {
@@ -29,30 +36,38 @@ describe('Auth Refresh Tokens E2E', () => {
   });
 
   it('should rotate refresh token and get new tokens', async () => {
-    const { body } = await request(app.getHttpServer())
+    const res = await request(app.getHttpServer())
       .post(apiEndpoint(ApiVersionEnum.V1, TOPICS.AUTH, ACTIONS.REFRESH))
-      .send({ refreshToken: data?.refreshToken })
+      .set('Cookie', [
+        `${AUTH_COOKIE_NAMES.REFRESH_TOKEN}=${data.refreshToken}`,
+      ])
       .expect(HttpStatus.CREATED);
 
-    expect(body).toMatchObject({
-      accessToken: body.accessToken,
-      refreshToken: body.refreshToken,
+    expect(res.body.data).toMatchObject({
+      message: 'Token refreshed successfully',
     });
 
-    expect(body.refreshToken).not.toBe(data?.refreshToken);
+    const cookies = res.headers['set-cookie'] as unknown as string[];
+    const newRefreshToken = parseCookieValue(
+      cookies,
+      AUTH_COOKIE_NAMES.REFRESH_TOKEN,
+    );
 
-    data!.refreshToken = body.refreshToken;
+    expect(newRefreshToken).toBeDefined();
+    expect(newRefreshToken).not.toBe(data.refreshToken);
+
+    data.refreshToken = newRefreshToken!;
   });
 
   it('should logout successfully', async () => {
     const { body } = await request(app.getHttpServer())
       .post(apiEndpoint(ApiVersionEnum.V1, TOPICS.AUTH, ACTIONS.LOGOUT))
-      .send({ refreshToken: data?.refreshToken })
-      .expect(HttpStatus.CREATED);
+      .set('Cookie', [
+        `${AUTH_COOKIE_NAMES.REFRESH_TOKEN}=${data.refreshToken}`,
+      ])
+      .expect(HttpStatus.NO_CONTENT);
 
-    expect(body).toMatchObject({
-      message: 'Session has been revoked successfully',
-    });
+    expect(body.data).toBeUndefined();
   });
 
   it('should logout all devices successfully with existing JWT tokens', async () => {
@@ -60,10 +75,10 @@ describe('Auth Refresh Tokens E2E', () => {
       .post(
         apiEndpoint(ApiVersionEnum.V1, TOPICS.AUTH, ACTIONS.LOGOUT_ALL_DEVICES),
       )
-      .auth(data?.accessToken as string, { type: 'bearer' })
-      .expect(HttpStatus.CREATED);
+      .auth(data.accessToken, { type: 'bearer' })
+      .expect(HttpStatus.OK);
 
-    expect(body).toMatchObject({
+    expect(body.data).toMatchObject({
       message: 'Logged out from all devices successfully',
     });
   });
