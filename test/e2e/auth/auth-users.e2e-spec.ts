@@ -6,11 +6,11 @@ import {
   setupE2EApp,
 } from '../_support/setup/e2e-app.helper';
 import { registerAndLogin } from '../_support/helpers';
-import { UpdateUserRolesCommand } from 'src/modules/users/application/commands/impl';
 import { UserRole } from 'src/modules/users/domain/enums';
 import request from 'supertest';
 import { ApiVersionEnum } from 'src/common/config';
 import { ACTIONS, TOPICS } from '../_support/constants';
+import { AUTH_COOKIE_NAMES } from 'src/modules/auth/domain/constants';
 
 describe('Auth + User Roles E2E', () => {
   let app: INestApplication;
@@ -26,46 +26,30 @@ describe('Auth + User Roles E2E', () => {
     commandBus = app.get(CommandBus);
 
     // --- SEED ADMIN ---
-    const admin = await registerAndLogin(app, {
-      email: 'admin@owlabs.com',
-      password: 'admin123',
-      name: 'Admin',
-    });
-
-    await commandBus.execute(
-      new UpdateUserRolesCommand(admin.userId, [UserRole.ADMIN]),
-    );
-
-    const { body: adminLogin } = await request(app.getHttpServer())
-      .post(apiEndpoint(ApiVersionEnum.V1, TOPICS.AUTH, ACTIONS.LOGIN))
-      .send({
+    const admin = await registerAndLogin(
+      app,
+      {
         email: 'admin@owlabs.com',
         password: 'admin123',
-      })
-      .expect(HttpStatus.CREATED);
-
-    adminToken = adminLogin.accessToken;
-
-    // --- SEED USER ---
-    const user = await registerAndLogin(app, {
-      email: 'matnor@yahoo.com',
-      password: 'user123',
-      name: 'Matnor',
-    });
-
-    await commandBus.execute(
-      new UpdateUserRolesCommand(user.userId, [UserRole.STUDENT]),
+        name: 'Admin',
+      },
+      UserRole.ADMIN,
     );
 
-    const { body: studentLogin } = await request(app.getHttpServer())
-      .post(apiEndpoint(ApiVersionEnum.V1, TOPICS.AUTH, ACTIONS.LOGIN))
-      .send({
+    adminToken = admin.accessToken;
+
+    // --- SEED USER ---
+    const user = await registerAndLogin(
+      app,
+      {
         email: 'matnor@yahoo.com',
         password: 'user123',
-      })
-      .expect(HttpStatus.CREATED);
+        name: 'Matnor',
+      },
+      UserRole.STUDENT,
+    );
 
-    studentToken = studentLogin.accessToken;
+    studentToken = user.accessToken;
   });
 
   afterAll(async () => {
@@ -75,10 +59,10 @@ describe('Auth + User Roles E2E', () => {
   it('admin can list all users', async () => {
     const { body } = await request(app.getHttpServer())
       .get(apiEndpoint(ApiVersionEnum.V1, TOPICS.USERS))
-      .auth(adminToken, { type: 'bearer' })
+      .set('Cookie', [`${AUTH_COOKIE_NAMES.ACCESS_TOKEN}=${adminToken}`])
       .expect(HttpStatus.OK);
 
-    expect(body).toMatchObject([
+    expect(body.data).toMatchObject([
       {
         id: expect.any(String),
         email: 'admin@owlabs.com',
@@ -110,11 +94,13 @@ describe('Auth + User Roles E2E', () => {
       .auth(studentToken, { type: 'bearer' })
       .expect(HttpStatus.FORBIDDEN);
 
-    expect(body).toHaveProperty(
-      'message',
-      'Access denied: you do not have permission to access this resource',
-    );
-    expect(body).toHaveProperty('error', 'Forbidden');
+    expect(body).toMatchObject({
+      success: false,
+      errorCode: 'HTTP_403',
+      message:
+        'Access denied: you do not have permission to access this resource',
+      timestamp: expect.any(String),
+    });
   });
 
   it('student can view own profile', async () => {
@@ -123,7 +109,7 @@ describe('Auth + User Roles E2E', () => {
       .auth(studentToken, { type: 'bearer' })
       .expect(HttpStatus.OK);
 
-    expect(body).toMatchObject({
+    expect(body.data).toMatchObject({
       id: expect.any(String),
       email: 'matnor@yahoo.com',
       name: 'Matnor',

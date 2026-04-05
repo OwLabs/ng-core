@@ -27,46 +27,30 @@ describe('Material Module E2E', () => {
     commandBus = app.get(CommandBus);
 
     // --- SEED TUTOR ---
-    const tutor = await registerAndLogin(app, {
-      email: 'tutor@neuralguru.com',
-      password: 'tutor123',
-      name: 'Sir Aiman',
-    });
-
-    await commandBus.execute(
-      new UpdateUserRolesCommand(tutor.userId, [UserRole.TUTOR]),
-    );
-
-    const { body: tutorLogin } = await request(app.getHttpServer())
-      .post(apiEndpoint(ApiVersionEnum.V1, TOPICS.AUTH, ACTIONS.LOGIN))
-      .send({
+    const tutor = await registerAndLogin(
+      app,
+      {
         email: 'tutor@neuralguru.com',
         password: 'tutor123',
-      })
-      .expect(HttpStatus.CREATED);
-
-    tutorToken = tutorLogin.accessToken;
-
-    // --- SEED USER ---
-    const user = await registerAndLogin(app, {
-      email: 'matnor@yahoo.com',
-      password: 'user123',
-      name: 'Matnor',
-    });
-
-    await commandBus.execute(
-      new UpdateUserRolesCommand(user.userId, [UserRole.STUDENT]),
+        name: 'Sir Aiman',
+      },
+      UserRole.TUTOR,
     );
 
-    const { body: studentLogin } = await request(app.getHttpServer())
-      .post(apiEndpoint(ApiVersionEnum.V1, TOPICS.AUTH, ACTIONS.LOGIN))
-      .send({
+    tutorToken = tutor.accessToken;
+
+    // --- SEED USER ---
+    const user = await registerAndLogin(
+      app,
+      {
         email: 'matnor@yahoo.com',
         password: 'user123',
-      })
-      .expect(HttpStatus.CREATED);
+        name: 'Matnor',
+      },
+      UserRole.STUDENT,
+    );
 
-    studentToken = studentLogin.accessToken;
+    studentToken = user.accessToken;
   });
 
   afterAll(async () => {
@@ -93,7 +77,7 @@ describe('Material Module E2E', () => {
       })
       .expect(HttpStatus.CREATED);
 
-    materialId = body.id;
+    materialId = body.data.id;
   });
 
   it('student is forbidden from uploading', async () => {
@@ -111,12 +95,13 @@ describe('Material Module E2E', () => {
         contentType: 'application/pdf',
       });
 
-    expect(body).toHaveProperty(
-      'message',
-      'Access denied: you do not have permission to access this resource',
-    );
-    expect(body).toHaveProperty('error', 'Forbidden');
-    expect(body).toHaveProperty('statusCode', HttpStatus.FORBIDDEN);
+    expect(body).toMatchObject({
+      success: false,
+      errorCode: 'HTTP_403',
+      message:
+        'Access denied: you do not have permission to access this resource',
+      timestamp: expect.any(String),
+    });
   });
 
   it('tutor can list all materials', async () => {
@@ -125,10 +110,10 @@ describe('Material Module E2E', () => {
       .auth(tutorToken, { type: 'bearer' })
       .expect(HttpStatus.OK);
 
-    expect(Array.isArray(body)).toBe(true);
-    expect(body.length).toBeGreaterThanOrEqual(1);
+    expect(Array.isArray(body.data)).toBe(true);
+    expect(body.data.length).toBeGreaterThanOrEqual(1);
 
-    const uploaded = body.find((m: any) => m.id === materialId);
+    const uploaded = body.data.find((m: any) => m.id === materialId);
 
     expect(uploaded).toBeDefined();
     expect(uploaded.title).toBe('Algebra Basics');
@@ -140,7 +125,7 @@ describe('Material Module E2E', () => {
       .auth(tutorToken, { type: 'bearer' })
       .expect(HttpStatus.OK);
 
-    expect(body).toMatchObject({
+    expect(body.data).toMatchObject({
       id: expect.any(String),
       title: 'Algebra Basics',
       description: 'Introduction to algebra',

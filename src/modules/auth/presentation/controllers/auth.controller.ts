@@ -20,7 +20,6 @@ import { LoginDto, RegisterDto, ResendOtpDto, VerifyOtpDto } from '../../dto';
 import { UserResponse } from 'src/modules/users/domain/types';
 import { AuthGuard } from '@nestjs/passport';
 import { Request as ExpressRequest, Response } from 'express';
-import { AuthTokens } from '../../domain/types';
 import { extractClientIp, getCookieOptions } from '../utils';
 import { VerifyUserCommand } from 'src/modules/users/application/commands/impl';
 import { CommandBus } from '@nestjs/cqrs';
@@ -189,6 +188,7 @@ export class AuthController {
    */
   @UseGuards(AuthGuard('jwt'))
   @Post('logout-all-devices')
+  @HttpCode(HttpStatus.OK)
   async logoutAllDevices(@Request() req: ExpressRequest) {
     // JwtStrategy.validate() returns { userId, email, roles }
     const user = req.user as { userId: string; email: string; roles: string[] };
