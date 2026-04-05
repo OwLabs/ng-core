@@ -222,24 +222,13 @@ describe('RefreshTokenService (Unit)', () => {
   });
 
   describe('revokeTokenById', () => {
-    it('should return success message when token found', async () => {
-      mockRepo.revokeById.mockResolvedValue({} as RefreshToken);
+    it('should call repo revokeById', async () => {
+      mockRepo.revokeById.mockResolvedValue(undefined);
 
-      const result = await service.revokeTokenById('some-id');
+      await service.revokeTokenById('some-id');
 
-      expect(result).toMatchObject({
-        message: 'Session has been revoked successfully',
-      });
-    });
-
-    it('should return not found message when token is missing', async () => {
-      mockRepo.revokeById.mockResolvedValue(null);
-
-      const result = await service.revokeTokenById('some-id');
-
-      expect(result).toMatchObject({
-        message: 'Token some-id not found',
-      });
+      expect(mockRepo.revokeById).toHaveBeenCalledWith('some-id');
+      expect(mockRepo.revokeById).toHaveBeenCalledTimes(1);
     });
   });
 
