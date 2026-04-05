@@ -2,9 +2,14 @@ import { ConfigService } from '@nestjs/config';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { AuthService, RefreshTokenService } from 'src/modules/auth/services';
+import {
+  AuthService,
+  OtpTokenService,
+  RefreshTokenService,
+} from 'src/modules/auth/services';
 import { User } from 'src/modules/users/domain/entities';
 import { AuthProvider, UserRole } from 'src/modules/users/domain/enums';
+import { UserValidationErrorCodes } from 'src/modules/users/domain/exceptions/users-error.codes';
 
 jest.mock('bcryptjs');
 
@@ -15,6 +20,7 @@ describe('AuthService (Unit)', () => {
   let queryBus: jest.Mocked<QueryBus>;
   let configService: jest.Mocked<ConfigService>;
   let refreshTokenService: jest.Mocked<RefreshTokenService>;
+  let otpTokenService: jest.Mocked<OtpTokenService>;
 
   let localUser: User;
   let googleUser: User;
@@ -46,12 +52,19 @@ describe('AuthService (Unit)', () => {
       createToken: jest.fn().mockReturnValue('fake.refresh.token'),
     } as any;
 
+    otpTokenService = {
+      generateAndSendOtp: jest
+        .fn()
+        .mockResolvedValue({ otpTokenId: 'fake-otp-id' }),
+    } as any;
+
     authService = new AuthService(
       jwtService,
       commandBus,
       queryBus,
       configService,
       refreshTokenService,
+      otpTokenService,
     );
   });
 
@@ -68,13 +81,19 @@ describe('AuthService (Unit)', () => {
       expect(commandBus.execute).toHaveBeenCalledTimes(1);
 
       expect(result).toMatchObject({
-        id: expect.any(String),
-        email: 'test@example.com',
-        name: 'Testing user',
-        provider: AuthProvider.LOCAL,
-        roles: [UserRole.LIMITED_ACCESS_USER],
-        createdAt: expect.any(Date),
-        updatedAt: expect.any(Date),
+        user: {
+          id: expect.any(String),
+          email: 'test@example.com',
+          name: 'Testing user',
+          provider: AuthProvider.LOCAL,
+          providerId: null,
+          isVerified: false,
+          avatar: null,
+          roles: [UserRole.LIMITED_ACCESS_USER],
+          createdAt: expect.any(Date),
+          updatedAt: expect.any(Date),
+        },
+        otpTokenId: 'fake-otp-id',
       });
 
       expect((result as any).password).toBeUndefined();
@@ -90,6 +109,7 @@ describe('AuthService (Unit)', () => {
       expect(result).toEqual({
         success: false,
         message: 'Email not found',
+        errorCode: UserValidationErrorCodes.EMAIL_NOT_FOUND,
       });
     });
 
@@ -104,6 +124,7 @@ describe('AuthService (Unit)', () => {
       expect(result).toEqual({
         success: false,
         message: 'This account uses Google login. Please sign in with Google',
+        errorCode: UserValidationErrorCodes.ACCOUNT_PROVIDER_MISMATCH,
       });
     });
 
@@ -119,10 +140,15 @@ describe('AuthService (Unit)', () => {
       expect(result).toEqual({
         success: false,
         message: 'Incorrect password',
+        errorCode: UserValidationErrorCodes.INCORRECT_PASSWORD,
       });
     });
 
     it('should return success when password is correct', async () => {
+      const verifySpy = jest
+        .spyOn(localUser, 'isVerified', 'get')
+        .mockReturnValue(true);
+
       queryBus.execute.mockResolvedValue(localUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
@@ -135,6 +161,8 @@ describe('AuthService (Unit)', () => {
         success: true,
         user: localUser.toResponse(),
       });
+
+      verifySpy.mockRestore();
     });
   });
 
