@@ -100,7 +100,8 @@
     "typescript-eslint": "^8.20.0"
   },
   "overrides": {
-    "js-yaml": "^4.1.1"
+    "js-yaml": "^4.1.1",
+    "handlebars": "^4.7.9"
   },
   "jest": {
     "moduleFileExtensions": [
