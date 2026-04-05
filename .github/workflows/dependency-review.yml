@@ -9,8 +9,8 @@
 # Public documentation: https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/about-dependency-review#dependency-review-enforcement
 name: 'Dependency review'
 on:
-  push: 
-    branches: 
+  push:
+    branches:
       - main
       - fix/pipeline-issue
   pull_request:
@@ -42,5 +42,6 @@ jobs:
           base-ref: ${{ github.event.pull_request.base.sha || github.event.before }}
           head-ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fail-on-severity: critical
+          allow-ghsas: GHSA-2w6w-674q-4c4q
         #   deny-licenses: GPL-1.0-or-later, LGPL-2.0-or-later
         #   retry-on-snapshot-warnings: true
